@@ -621,6 +621,7 @@ function openEvent(eid) {
   var sp = _split(eid);
   var exps = _data.expenses.filter(function(e) { return e.eventId == eid; });
   var revs = _data.revenues.filter(function(r) { return r.eventId == eid; });
+  var bankBalance = revs.reduce(function(a,b){ return a + Number(b.amount||0); }, 0) - exps.reduce(function(a,b){ return a + Number(b.amount||0); }, 0);
   var canDel = _role === 'admin';
 
   // Progress bar
@@ -698,7 +699,7 @@ function openEvent(eid) {
       + '<div style="flex:2"><lbl>Description</lbl><input id="iev-exp-de" placeholder="Ex: Location salle"></div>'
       + '<div><lbl>Montant ($)</lbl><input id="iev-exp-am" type="number" step="0.01" style="width:100px"></div>'
       + '</div><div class="frow">'
-      + '<div><lbl>Paye par</lbl><select id="iev-exp-pb">'+_buildOpts(_settings.payers,['LP Cote','LP Viens','Vincent','Fonds commun'])+'</select></div>'
+      + '<div><lbl>Payé par</lbl><select id="iev-exp-pb">'+_buildOpts(_settings.payers,['Banque de l'évènement','Fonds commun','LP Cote','LP Viens','Vincent'])+'</select></div>'
       + '<div><lbl>Statut</lbl><select id="iev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'
       + '<div><lbl>Remb.</lbl><select id="iev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'
       + '<div style="flex:2"><lbl>Notes</lbl><input id="iev-exp-no" placeholder="Optionnel"></div>'
@@ -1123,10 +1124,14 @@ function _rFc() {
 
   _data.events.forEach(function(ev) {
     var sp = _split(ev.id);
+    var eventRev = _data.revenues.filter(function(r){ return r.eventId === ev.id; }).reduce(function(a,b){ return a + Number(b.amount || 0); }, 0);
+    var eventExp = _data.expenses.filter(function(e){ return e.eventId === ev.id && String(e.paidBy || '').toLowerCase() !== 'fonds commun'; }).reduce(function(a,b){ return a + Number(b.amount || 0); }, 0);
+    var bank = eventRev - eventExp;
     if (sp.fonds > 0) {
       contributions += sp.fonds;
       moves.push({type:'credit', label:'Contribution événement', evName:ev.name, amount:sp.fonds, date:ev.date||'', note:'Part du fonds commun'});
     }
+    moves.push({type:'bank', label:'Banque événement', evName:ev.name, amount:bank, date:ev.date||'', note:'Revenus - dépenses'});
   });
 
   _data.expenses.forEach(function(exp) {
@@ -1172,18 +1177,21 @@ function _rFc() {
   if (!moves.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Aucun mouvement</td></tr>'; return; }
 
   var running = 0;
-  var rows = moves.map(function(m) {
-    running += (m.type === 'credit' ? m.amount : -m.amount);
+  tb.innerHTML = moves.map(function(m) {
+    if (m.type === 'credit') running += m.amount;
+    else if (m.type === 'debit') running -= m.amount;
+    var typeLabel = m.type === 'bank' ? 'Banque' : (m.type === 'credit' ? 'Crédit' : 'Débit');
+    var amountClass = m.type === 'bank' ? (m.amount >= 0 ? 'g' : 'r') : (m.type === 'credit' ? 'g' : 'r');
+    var sign = m.type === 'bank' ? '' : (m.type === 'credit' ? '+' : '-');
     return '<tr>'
       + '<td>'+(m.date || '-')+'</td>'
-      + '<td><span class="bj '+(m.type === 'credit' ? 'jg' : 'jr')+'">'+(m.type === 'credit' ? 'Crédit' : 'Débit')+'</span></td>'
+      + '<td><span class="bj '+(m.type === 'bank' ? 'jy' : (m.type === 'credit' ? 'jg' : 'jr'))+'">'+typeLabel+'</span></td>'
       + '<td>'+m.evName+'</td>'
       + '<td>'+m.label+(m.note ? ' <span style="color:var(--muted)">— '+m.note+'</span>' : '')+'</td>'
-      + '<td class="'+(m.type === 'credit' ? 'g' : 'r')+'">'+(m.type === 'credit' ? '+' : '-')+_m(m.amount)+'</td>'
+      + '<td class="'+amountClass+'">'+(m.type === 'bank' ? _m(m.amount) : sign+_m(m.amount))+'</td>'
       + '<td class="'+(running >= 0 ? 'g' : 'r')+'">'+_m(running)+'</td>'
       + '</tr>';
   }).join('');
-  tb.innerHTML = rows;
 }
 
 
