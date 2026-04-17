@@ -4,244 +4,108 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Southevents Finances</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
-<div class="top-shell">
-  <header>
-    <div class="logo">
-      <div><div class="bn">SOUTHEVENTS</div><div class="bs">Gestion Financiere</div></div>
-    </div>
-  </header>
-  <nav>
-    <button id="nb-dash" class="nb on" onclick="showPage('dash')">Dashboard</button>
-    <button id="nb-ev-list" class="nb" onclick="showPage('ev-list')">Evenements</button>
-    <button id="nb-add" class="nb" onclick="showPage('add')">Creer evenement</button>
-    <button id="nb-graphs" class="nb" onclick="showPage('graphs')">Graphiques</button>
-    <button id="nb-fc" class="nb" onclick="showPage('fc');_rFc()">Fonds commun</button>
-    <button id="nb-history" class="nb" onclick="showPage('history')">Historique</button>
-    <button id="nb-users" class="nb admin-only" onclick="showPage('users')">Utilisateurs</button>
-    <button id="nb-ex" class="nb" onclick="showPage('ex')">Exporter</button>
-    <div class="user-info" id="user-email"></div>
-    <button class="btn br2" style="margin-left:8px;padding:5px 10px;font-size:.7rem" onclick="doLogout()">Deconnexion</button>
-  </nav>
-</div>
-<div class="wrap">
-<div id="pg-dash" class="pg on">
-  <div class="grid" id="d-stats"></div>
-  <div class="card"><div class="ct">Par evenement — cliquez pour le detail</div>
-    <table><thead><tr><th>Evenement</th><th>Date</th><th>Depenses</th><th>Revenus</th><th>Profit</th><th>Fonds</th><th>Statut</th></tr></thead>
-    <tbody id="d-ev"></tbody></table>
-  </div>
-  <div class="card"><div class="ct">Partage global</div><div class="spw" id="d-split"></div></div>
-</div>
-
-<div id="pg-ev-list" class="pg">
-  <div class="card"><div class="ct">Choisissez un evenement</div><div id="ev-list-wrap"></div></div>
-</div>
-
-<div id="pg-ev-detail" class="pg"></div>
-
-<div id="pg-add" class="pg">
-  <div class="card"><div class="ct">Nouvel evenement</div>
-    <div class="frow">
-      <div><lbl>Nom</lbl><input id="ev-n" placeholder="Ex: Soiree Club X"></div>
-      <div><lbl>Date</lbl><input id="ev-d" type="date"></div>
-      <div><lbl>Lieu</lbl><input id="ev-l" placeholder="Ex: Club Stereo"></div>
-      <div><lbl>Prix billet ($)</lbl><input id="ev-p" type="number" step="0.01" value="15"></div>
-    </div>
-    <div class="frow">
-      <div><lbl>Objectif billets</lbl><input id="ev-obj" type="number" placeholder="Ex: 100" min="0"></div>
-      <div><lbl>Notes</lbl><input id="ev-notes" placeholder="Infos importantes..."></div>
-    </div>
-    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-      <div class="ct" style="margin-bottom:10px">Fonds commun</div>
-      <div class="frow">
-        <div><lbl>Activer le fonds commun</lbl>
-          <select id="ev-fc-on"><option value="1">Oui</option><option value="0">Non</option></select>
-        </div>
-        <div><lbl>Pourcentage fonds (%)</lbl>
-          <input id="ev-fc-pct" type="number" min="0" max="100" step="0.1" value="10">
-        </div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">SE</div>
+      <div>
+        <div class="brand-title">SOUTHEVENTS</div>
+        <div class="brand-sub">Gestion financière</div>
       </div>
     </div>
-    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-      <div class="ct" style="margin-bottom:6px">Actionnaires <span style="color:var(--muted);font-weight:400;font-size:.7rem">(le total doit etre 100%)</span></div>
-      <div id="shareholders-form"></div>
-      <button class="btn bo" style="margin-top:6px;font-size:.72rem" onclick="addShareholderRow()">+ Ajouter actionnaire</button>
+    <nav class="nav">
+      <button class="navbtn on" data-page="dash">Dashboard</button>
+      <button class="navbtn" data-page="events">Événements</button>
+      <button class="navbtn" data-page="add">Créer événement</button>
+      <button class="navbtn" data-page="funds">Fonds commun</button>
+      <button class="navbtn" data-page="history">Historique</button>
+      <button class="navbtn" data-page="settings">Paramètres</button>
+    </nav>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSub">Vue d’ensemble de vos événements</p>
+      </div>
+      <div class="actions">
+        <button id="seedBtn" class="btn secondary">Charger démo</button>
+        <button id="resetBtn" class="btn ghost">Réinitialiser</button>
+      </div>
+    </header>
+
+    <section id="page-dash" class="page on">
+      <div class="kpis" id="kpis"></div>
+      <div class="card">
+        <div class="card-title">Par événement</div>
+        <div class="table-wrap"><table><thead><tr><th>Événement</th><th>Date</th><th>Revenus</th><th>Dépenses</th><th>Solde</th></tr></thead><tbody id="dashTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="page-events" class="page">
+      <div class="card">
+        <div class="card-title">Événements</div>
+        <div id="eventsList" class="stack"></div>
+      </div>
+    </section>
+
+    <section id="page-add" class="page">
+      <div class="card">
+        <div class="card-title">Créer un événement</div>
+        <form id="eventForm" class="form-grid">
+          <input name="name" placeholder="Nom" required>
+          <input name="date" type="date" required>
+          <input name="place" placeholder="Lieu">
+          <input name="ticketPrice" type="number" step="0.01" placeholder="Prix billet">
+          <input name="objective" type="number" placeholder="Objectif billets">
+          <textarea name="notes" placeholder="Notes"></textarea>
+          <button class="btn primary" type="submit">Créer</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="page-funds" class="page">
+      <div class="kpis" id="fundKpis"></div>
+      <div class="card">
+        <div class="card-title">Mouvements du fonds commun</div>
+        <div class="table-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Événement</th><th>Montant</th><th>Solde</th></tr></thead><tbody id="fundTable"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="page-history" class="page">
+      <div class="card">
+        <div class="card-title">Historique</div>
+        <div id="historyList" class="stack"></div>
+      </div>
+    </section>
+
+    <section id="page-settings" class="page">
+      <div class="card">
+        <div class="card-title">Paramètres</div>
+        <div class="form-grid">
+          <label>Catégories dépenses<textarea id="expCats"></textarea></label>
+          <label>Catégories revenus<textarea id="revCats"></textarea></label>
+          <label>Payé par<textarea id="payers"></textarea></label>
+          <button id="saveSettings" class="btn primary" type="button">Enregistrer</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div id="modalTitle">Modal</div>
+      <button id="closeModal" class="xbtn">×</button>
     </div>
-    <button class="btn bw" style="margin-top:14px" onclick="addEvent()">+ Creer evenement</button>
+    <div id="modalBody"></div>
   </div>
 </div>
 
-
-<div id="pg-graphs" class="pg">
-  <div class="card"><div class="ct">Revenus vs Depenses par evenement</div>
-    <div class="chart-wrap"><canvas id="ch-revdep"></canvas></div>
-  </div>
-  <div class="card"><div class="ct">Profit par evenement</div>
-    <div class="chart-wrap"><canvas id="ch-profit"></canvas></div>
-  </div>
-  <div class="card"><div class="ct">Partage global</div>
-    <div style="max-width:300px;margin:0 auto"><canvas id="ch-split"></canvas></div>
-  </div>
-</div>
-
-<div id="pg-history" class="pg">
-  <div class="card"><div class="ct">Dernieres actions</div>
-    <table><thead><tr><th>Date</th><th>Action</th><th>Evenement</th><th>Detail</th><th>Montant</th><th>Par</th></tr></thead>
-    <tbody id="history-tb"><tr><td colspan="6" class="empty">Chargement...</td></tr></tbody></table>
-  </div>
-</div>
-
-<div id="pg-users" class="pg admin-only">
-  <div class="card"><div class="ct">Creer un utilisateur</div>
-    <div class="frow">
-      <div><lbl>Nom</lbl><input id="u-name" placeholder="Ex: LP Viens"></div>
-      <div><lbl>Email</lbl><input id="u-email" type="email" placeholder="email@exemple.com"></div>
-      <div><lbl>Mot de passe</lbl><input id="u-pass" type="password" placeholder="Min. 6 caracteres"></div>
-      <div><lbl>Role</lbl><select id="u-role">
-        <option value="viewer">Viewer — voir seulement</option>
-        <option value="manager">Manager — ajouter depenses/revenus</option>
-        <option value="admin">Admin — acces complet</option>
-      </select></div>
-    </div>
-    <button class="btn bp" onclick="createUser()">+ Creer compte</button>
-  </div>
-  <div class="card"><div class="ct">Utilisateurs actifs</div>
-    <table><thead><tr><th>Nom</th><th>Email</th><th>Role</th><th></th></tr></thead>
-    <tbody id="users-tb"></tbody></table>
-  </div>
-  <div class="card"><div class="ct">Niveaux de permissions</div>
-    <table><thead><tr><th>Permission</th><th>Viewer</th><th>Manager</th><th>Admin</th></tr></thead>
-    <tbody>
-      <tr><td>Voir dashboard et evenements</td><td class="g">✓</td><td class="g">✓</td><td class="g">✓</td></tr>
-      <tr><td>Ajouter depenses et revenus</td><td class="r">✗</td><td class="g">✓</td><td class="g">✓</td></tr>
-      <tr><td>Creer des evenements</td><td class="r">✗</td><td class="g">✓</td><td class="g">✓</td></tr>
-      <tr><td>Supprimer des entrees</td><td class="r">✗</td><td class="r">✗</td><td class="g">✓</td></tr>
-      <tr><td>Gerer les utilisateurs</td><td class="r">✗</td><td class="r">✗</td><td class="g">✓</td></tr>
-      <tr><td>Exporter PDF et Excel</td><td class="g">✓</td><td class="g">✓</td><td class="g">✓</td></tr>
-    </tbody></table>
-  </div>
-</div>
-
-<div id="pg-ex" class="pg">
-  <div class="card"><div class="ct">PDF — Resume financier</div>
-    <p class="desc">Genere un PDF complet avec le partage et les stats.</p>
-    <div style="margin-bottom:12px"><lbl>Evenement (optionnel)</lbl>
-    <select class="fs" id="pdf-sel" style="width:100%;max-width:360px"><option value="">Tous</option></select></div>
-    <button class="btn bw" onclick="doExportPDF()">Telecharger PDF</button>
-  </div>
-  <div class="card"><div class="ct">Excel / Google Sheets</div>
-    <p class="desc">Exporte toutes les donnees dans un fichier .xlsx.</p>
-    <button class="btn bg2" onclick="doExportXLSX()">Telecharger Excel</button>
-  </div>
-</div>
-
-
-
-<!-- HISTORY DETAIL MODAL -->
-<div id="hist-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div class="ct" style="margin:0">Détail de l'action</div>
-      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeHistModal()">✕</button>
-    </div>
-    <div id="hist-modal-body"></div>
-  </div>
-</div>
-
-<!-- EDIT EVENT MODAL -->
-<div id="ev-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-      <div class="ct" style="margin:0">Modifier les parametres</div>
-      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEvModal()">✕ Fermer</button>
-    </div>
-    <div id="ev-modal-content"></div>
-  </div>
-</div>
-
-<div id="pg-fc" class="pg">
-  <div id="fc-summary"></div>
-  <div class="card">
-    <div class="ct">Solde du Fonds commun</div>
-    <div class="grid" id="fc-stats"></div>
-  </div>
-  <div class="card">
-    <div class="ct">Historique des mouvements</div>
-    <div style="overflow-x:auto"><table>
-      <thead><tr><th>Date</th><th>Type</th><th>Evenement</th><th>Description</th><th>Montant</th><th>Solde apres</th></tr></thead>
-      <tbody id="fc-tb"><tr><td colspan="6" class="empty">Aucun mouvement</td></tr></tbody>
-    </table></div>
-  </div>
-</div>
-
-<!-- MODAL: modifier evenement -->
-<div id="ev-info-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:480px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div class="ct" style="margin:0">Modifier l&#39;evenement</div>
-      <button class="btn bo" onclick="closeEvInfoModal()">&#x2715; Fermer</button>
-    </div>
-    <div class="frow"><div style="flex:1"><lbl>Nom</lbl><input id="ev-edit-name" style="width:100%"></div></div>
-    <div class="frow">
-      <div><lbl>Date</lbl><input id="ev-edit-date" type="date"></div>
-      <div><lbl>Lieu</lbl><input id="ev-edit-lieu"></div>
-    </div>
-    <div class="frow">
-      <div><lbl>Prix billet ($)</lbl><input id="ev-edit-prix" type="number" step="0.01"></div>
-      <div><lbl>Objectif billets</lbl><input id="ev-edit-obj" type="number" min="0"></div>
-    </div>
-    <button class="btn bw" style="margin-top:14px;width:100%" onclick="saveEvInfo()">Enregistrer</button>
-  </div>
-</div>
-
-<!-- MODAL: modifier depense/revenu -->
-<div id="edit-er-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:550;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;width:100%;max-width:440px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="ct" style="margin:0" id="er-modal-title">Modifier</div>
-      <button class="btn bo" onclick="closeEditErModal()">&#x2715; Fermer</button>
-    </div>
-    <div id="er-paidby-row" class="frow">
-      <div style="flex:1"><lbl>Paye par</lbl><select id="er-paidBy" style="width:100%"></select></div>
-    </div>
-    <div class="frow">
-      <div style="flex:1"><lbl>Statut</lbl><select id="er-status" style="width:100%"></select></div>
-      <div style="flex:1" id="er-refund-row"><lbl>Remboursable</lbl><select id="er-refund" style="width:100%"><option value="non">Non</option><option value="oui">Oui</option></select></div>
-    </div>
-    <div class="frow"><div style="flex:1"><lbl>Notes</lbl><textarea id="er-notes" rows="3" style="width:100%"></textarea></div></div>
-    <button class="btn bw" style="margin-top:12px;width:100%" onclick="saveEditEr()">Enregistrer</button>
-  </div>
-</div>
-
-<!-- MODAL: checklist notes -->
-<div id="notes-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="ct" style="margin:0">Notes &amp; Checklist</div>
-      <button class="btn bo" onclick="closeNotesModal()">&#x2715; Fermer</button>
-    </div>
-    <div id="notes-modal-list" style="margin-bottom:12px"></div>
-    <div style="display:flex;gap:8px">
-      <input id="notes-new-item" placeholder="Nouvelle note..." style="flex:1" onkeydown="if(event.key==='Enter')addNoteItem()">
-      <button class="btn bw" onclick="addNoteItem()">+ Ajouter</button>
-    </div>
-    <button class="btn bg2" style="margin-top:12px;width:100%" onclick="saveNotes()">Enregistrer la checklist</button>
-  </div>
-</div>
-
-</div>
 <script src="script.js"></script>
-
-
 </body>
 </html>
