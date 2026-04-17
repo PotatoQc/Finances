@@ -243,3 +243,69 @@ header + nav .user-info {
 }
 body{padding-top:0}
 #pg-ev-detail .card:first-child{margin-top:0}
+
+/* ===== HEADER REWRITE v19.1 ===== */
+body{padding-top:0}
+.top-shell{
+  position: sticky;
+  top: 0;
+  z-index: 500;
+  background: var(--card) !important;
+  border-bottom: 1px solid var(--border);
+}
+.top-shell .header-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 20px;
+}
+.top-shell header{
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  min-height: 58px;
+  height: auto;
+  padding: 10px 0 8px;
+  border-bottom: none !important;
+  background: transparent !important;
+}
+.top-shell nav{
+  display: flex !important;
+  align-items: stretch;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  gap: 0;
+  padding: 0 20px;
+  background: transparent !important;
+  border-top: 1px solid rgba(255,255,255,.04);
+}
+.top-shell nav .nb{
+  display: inline-flex !important;
+  align-items: center;
+  height: 42px;
+  margin: 0 !important;
+  padding: 0 15px !important;
+  border: 0 !important;
+  border-bottom: 3px solid transparent !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  color: rgba(255,255,255,.50) !important;
+}
+.top-shell nav .nb.on{
+  background: transparent !important;
+  color: #fff !important;
+  border-bottom-color: #6366f1 !important;
+}
+.top-shell nav .user-info{
+  display: flex;
+  align-items: center;
+  height: 42px;
+  padding: 0 10px;
+}
+#pg-ev-detail .card:first-child{margin-top:0}

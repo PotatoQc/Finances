@@ -722,8 +722,7 @@ function openEvent(eid) {
   document.querySelectorAll('.nb').forEach(function(el) { el.classList.remove('on'); });
   var det = _g('pg-ev-detail');
   if (det) { det.innerHTML = html; det.classList.add('on'); }
-  document.querySelectorAll('.pg').forEach(function(el){ if (el.id !== 'pg-ev-detail') el.classList.remove('on'); });
-  document.querySelectorAll('.nb').forEach(function(el){ el.classList.remove('on'); });
+  document.querySelectorAll('.pg').forEach(function(el){ el.classList.remove('on'); });
   var evPg = _g('pg-ev-detail'); if (evPg) evPg.classList.add('on');
 }
 
