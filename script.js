@@ -1117,38 +1117,73 @@ function _toggleNote(eid,idx) {
 // ============================================================
 // FONDS COMMUN
 // ============================================================
+
 function _rFc() {
-  var totalAccum=0, totalSpent=0, moves=[];
-  _data.events.forEach(function(ev){
-    var sp=_split(ev.id);
-    if (sp.fonds>0) { totalAccum+=sp.fonds; moves.push({type:'credit',label:'Partage',evName:ev.name,amount:sp.fonds,date:ev.date||''}); }
-  });
-  _data.expenses.forEach(function(exp){
-    if ((exp.paidBy||'').toLowerCase().indexOf('fonds commun')>-1) {
-      totalSpent+=exp.amount||0;
-      var ev=_data.events.find(function(e){return e.id===exp.eventId;})||{};
-      moves.push({type:'debit',label:exp.desc||exp.cat||'Depense',evName:ev.name||'-',amount:exp.amount||0,date:exp.createdAt?new Date(exp.createdAt.toDate?exp.createdAt.toDate():exp.createdAt).toLocaleDateString('fr-CA'):''});
+  var contributions = 0, fundSpend = 0, reimburse = 0, moves = [];
+
+  _data.events.forEach(function(ev) {
+    var sp = _split(ev.id);
+    if (sp.fonds > 0) {
+      contributions += sp.fonds;
+      moves.push({type:'credit', label:'Contribution événement', evName:ev.name, amount:sp.fonds, date:ev.date||'', note:'Part du fonds commun'});
     }
   });
-  var solde=totalAccum-totalSpent;
-  var fcStats=_g('fc-stats');
-  if (fcStats) fcStats.innerHTML=[
-    ['Total accumule',_m(totalAccum),'y'],
-    ['Depenses FC',_m(totalSpent),'r'],
-    ['Solde actuel',_m(solde),solde>=0?'g':'r']
-  ].map(function(s){ return '<div class="stat"><div class="sl">'+s[0]+'</div><div class="sv '+s[2]+'">'+s[1]+'</div></div>'; }).join('');
-  moves.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
-  var tb=_g('fc-tb'); if (!tb) return;
-  if (!moves.length) { tb.innerHTML='<tr><td colspan="6" class="empty">Aucun mouvement</td></tr>'; return; }
-  var running=0;
-  var withBal=moves.slice().reverse().map(function(m){
-    running += (m.type==='credit' ? m.amount : -m.amount);
-    return Object.assign({},m,{bal:running});
-  }).reverse();
-  tb.innerHTML=withBal.map(function(m){
-    var tc=m.type==='credit'?'jg':'jr', tl=m.type==='credit'?'Credit':'Debit';
-    var sign=m.type==='credit'?'+':'-';
-    return '<tr><td>'+(m.date||'-')+'</td><td><span class="bj '+tc+'">'+tl+'</span></td><td>'+m.evName+'</td><td>'+m.label+'</td><td class="'+(m.type==='credit'?'g':'r')+'">'+sign+_m(m.amount)+'</td><td class="'+(m.bal>=0?'g':'r')+'">'+_m(m.bal)+'</td></tr>';
+
+  _data.expenses.forEach(function(exp) {
+    var paidBy = String(exp.paidBy || '').toLowerCase();
+    var ev = _data.events.find(function(e) { return e.id === exp.eventId; }) || {};
+    if (paidBy.indexOf('fonds commun') > -1) {
+      fundSpend += Number(exp.amount || 0);
+      moves.push({type:'debit', label:exp.desc || exp.cat || 'Dépense', evName:ev.name || '-', amount:Number(exp.amount||0), date:exp.createdAt ? new Date(exp.createdAt.toDate ? exp.createdAt.toDate() : exp.createdAt).toLocaleDateString('fr-CA') : '', note:'Sortie du fonds'});
+    }
+    if ((exp.refund || '').toLowerCase() === 'oui') {
+      reimburse += Number(exp.amount || 0);
+      moves.push({type:'credit', label:exp.desc || exp.cat || 'Remboursement', evName:ev.name || '-', amount:Number(exp.amount||0), date:exp.createdAt ? new Date(exp.createdAt.toDate ? exp.createdAt.toDate() : exp.createdAt).toLocaleDateString('fr-CA') : '', note:'Remboursé par revenus'});
+    }
+  });
+
+  var netSpent = fundSpend - reimburse;
+  var pendingRecovery = Math.max(fundSpend - reimburse, 0);
+  var balance = contributions - netSpent;
+
+  var fcStats = _g('fc-stats');
+  if (fcStats) {
+    fcStats.innerHTML = [
+      ['Contributions', _m(contributions), 'y'],
+      ['Dépenses FC', _m(fundSpend), 'r'],
+      ['Remboursé', _m(reimburse), 'g'],
+      ['Solde réel', _m(balance), balance >= 0 ? 'g' : 'r']
+    ].map(function(s){ return '<div class="stat"><div class="sl">'+s[0]+'</div><div class="sv '+s[2]+'">'+s[1]+'</div></div>'; }).join('');
+  }
+
+  var summary = _g('fc-summary');
+  if (summary) {
+    summary.innerHTML = '<div class="card"><div class="ct">État du fonds commun</div>'
+      + '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">'
+      + '<div class="stat"><div class="sl">À récupérer</div><div class="sv y">'+_m(pendingRecovery)+'</div></div>'
+      + '<div class="stat"><div class="sl">Net utilisé</div><div class="sv r">'+_m(netSpent)+'</div></div>'
+      + '<div class="stat"><div class="sl">Contributions</div><div class="sv g">'+_m(contributions)+'</div></div>'
+      + '</div></div>';
+  }
+
+  moves.sort(function(a,b) { return (b.date || '').localeCompare(a.date || ''); });
+  var tb = _g('fc-tb');
+  if (!tb) return;
+  if (!moves.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Aucun mouvement</td></tr>'; return; }
+
+  var running = 0;
+  var rows = moves.map(function(m) {
+    running += (m.type === 'credit' ? m.amount : -m.amount);
+    return '<tr>'
+      + '<td>'+(m.date || '-')+'</td>'
+      + '<td><span class="bj '+(m.type === 'credit' ? 'jg' : 'jr')+'">'+(m.type === 'credit' ? 'Crédit' : 'Débit')+'</span></td>'
+      + '<td>'+m.evName+'</td>'
+      + '<td>'+m.label+(m.note ? ' <span style="color:var(--muted)">— '+m.note+'</span>' : '')+'</td>'
+      + '<td class="'+(m.type === 'credit' ? 'g' : 'r')+'">'+(m.type === 'credit' ? '+' : '-')+_m(m.amount)+'</td>'
+      + '<td class="'+(running >= 0 ? 'g' : 'r')+'">'+_m(running)+'</td>'
+      + '</tr>';
   }).join('');
+  tb.innerHTML = rows;
 }
+
 
