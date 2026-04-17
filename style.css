@@ -140,3 +140,25 @@ nav {
 
 /* Ensure app header stays tight to top */
 body { padding-top: 0; }
+
+/* Keep the main navigation aligned with the logo/title row */
+body > nav {
+  margin-top: -8px;
+}
+body > nav .nb {
+  line-height: 1;
+}
+body > nav {
+  background: transparent;
+}
+body > nav .nb {
+  background: transparent;
+}
+body > nav .nb.on {
+  background: transparent;
+}
+
+@media (max-width: 1200px) {
+  body > nav { padding-left: 8px; padding-right: 8px; }
+  body > nav .nb { padding: 13px 12px 10px; font-size: .74rem; }
+}
