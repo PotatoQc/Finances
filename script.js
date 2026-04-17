@@ -150,6 +150,7 @@ auth.onAuthStateChanged(function(user) {
 
 function _boot() {
   _updateNav();
+  _initSettingsListener();
   var ue = _g('user-email');
   if (ue) ue.textContent = _user.email + (_role === 'admin' ? ' (Admin)' : _role === 'manager' ? ' (Manager)' : '');
   _initListeners();
@@ -679,8 +680,38 @@ function openEvent(eid) {
     + '<button id="tb-dep" class="tab on" onclick="showTab(\'dep\',\'ev-tabs\')">Depenses ('+exps.length+')</button>'
     + '<button id="tb-rev2" class="tab" onclick="showTab(\'rev2\',\'ev-tabs\')">Revenus ('+revs.length+')</button>'
     + '</div>'
-    + '<div id="tc-dep" class="tab-content on"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table></div>'
-    + '<div id="tc-rev2" class="tab-content"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table></div>'
+    + '<div id="tc-dep" class="tab-content on">'
+    + '<div class="inline-form">'
+    + '<div class="frow">'
+    + '<div><lbl>Categorie</lbl><select id="iev-exp-ca">' + _buildOpts(_settings.expCats, ['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre']) + '</select></div>'
+    + '<div style="flex:2"><lbl>Description</lbl><input id="iev-exp-de" placeholder="Ex: Location salle"></div>'
+    + '<div><lbl>Montant ($)</lbl><input id="iev-exp-am" type="number" step="0.01" style="width:100px"></div>'
+    + '</div>'
+    + '<div class="frow">'
+    + '<div><lbl>Paye par</lbl><select id="iev-exp-pb">' + _buildOpts(_settings.payers, ['LP Cote','LP Viens','Vincent','Fonds commun']) + '</select></div>'
+    + '<div><lbl>Statut</lbl><select id="iev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'
+    + '<div><lbl>Remb.</lbl><select id="iev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'
+    + '<div style="flex:2"><lbl>Notes</lbl><input id="iev-exp-no" placeholder="Optionnel"></div>'
+    + '</div>'
+    + (_role!=='viewer' ? '<button class="btn bw" style="margin-top:6px" onclick="addExpInline(\''+eid+'\')" >+ Ajouter depense</button>' : '')
+    + '</div>'
+    + '<div style="overflow-x:auto"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table></div>'
+    + '</div>'
+    + '<div id="tc-rev2" class="tab-content">'
+    + '<div class="inline-form">'
+    + '<div class="frow">'
+    + '<div><lbl>Categorie</lbl><select id="iev-rev-ca">' + _buildOpts(_settings.revCats, ['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre']) + '</select></div>'
+    + '<div style="flex:2"><lbl>Description</lbl><input id="iev-rev-de" placeholder="Ex: Vente Stripe"></div>'
+    + '<div><lbl>Montant ($)</lbl><input id="iev-rev-am" type="number" step="0.01" style="width:100px"></div>'
+    + '</div>'
+    + '<div class="frow">'
+    + '<div><lbl>Statut</lbl><select id="iev-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>'
+    + '<div style="flex:3"><lbl>Notes</lbl><input id="iev-rev-no" placeholder="Optionnel"></div>'
+    + '</div>'
+    + (_role!=='viewer' ? '<button class="btn bg2" style="margin-top:6px" onclick="addRevInline(\''+eid+'\')" >+ Ajouter revenu</button>' : '')
+    + '</div>'
+    + '<div style="overflow-x:auto"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table></div>'
+    + '</div>'
     + '</div>';
 
   document.querySelectorAll('.pg').forEach(function(el) { el.classList.remove('on'); });
@@ -883,3 +914,75 @@ function _refresh() {
 }
 
 window.onload = function() { _initShareholderForm(); };
+
+// ── Settings defaults ──────────────────────────────────────────────────────
+var _settings = {
+  expCats: ['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre'],
+  revCats: ['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre'],
+  payers:  ['LP Cote','LP Viens','Vincent','Fonds commun']
+};
+
+function _buildOpts(arr, fallback) {
+  var list = (arr && arr.length) ? arr : fallback;
+  return list.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+}
+
+// ── Inline expense ──────────────────────────────────────────────────────────
+function addExpInline(eid) {
+  if (_role === 'viewer') { toast('Permission refusee — contactez un admin', 'error'); return; }
+  var amtEl = _g('iev-exp-am'); if (!amtEl) return;
+  var amt = Number(amtEl.value);
+  if (!amt || amt <= 0) { toast('Entrez un montant valide', 'error'); return; }
+  var cat  = (_g('iev-exp-ca')  || {}).value || '';
+  var desc = (_g('iev-exp-de')  || {}).value || '';
+  var pb   = (_g('iev-exp-pb')  || {}).value || '';
+  var st   = (_g('iev-exp-st')  || {}).value || 'paye';
+  var rf   = (_g('iev-exp-rf')  || {}).value || 'non';
+  var no   = (_g('iev-exp-no')  || {}).value || '';
+  db.collection('expenses').add({
+    eventId: eid, cat: cat, desc: desc, amount: amt,
+    paidBy: pb, status: st, refund: rf, notes: no,
+    addedBy: _user.email, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    ['iev-exp-de','iev-exp-am','iev-exp-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
+    toast('Depense ajoutee!', 'success');
+    logHistory('Depense ajoutee', eid, cat+' — '+desc, amt, {
+      Categorie:cat, Description:desc, Montant:_m(amt), 'Paye par':pb, Statut:st, Remboursable:rf
+    });
+  }).catch(function(e){ toast('Erreur: '+e.message, 'error'); });
+}
+
+// ── Inline revenue ──────────────────────────────────────────────────────────
+function addRevInline(eid) {
+  if (_role === 'viewer') { toast('Permission refusee — contactez un admin', 'error'); return; }
+  var amtEl = _g('iev-rev-am'); if (!amtEl) return;
+  var amt = Number(amtEl.value);
+  if (!amt || amt <= 0) { toast('Entrez un montant valide', 'error'); return; }
+  var cat  = (_g('iev-rev-ca') || {}).value || '';
+  var desc = (_g('iev-rev-de') || {}).value || '';
+  var st   = (_g('iev-rev-st') || {}).value || 'recu';
+  var no   = (_g('iev-rev-no') || {}).value || '';
+  db.collection('revenues').add({
+    eventId: eid, cat: cat, desc: desc, amount: amt,
+    status: st, notes: no, addedBy: _user.email,
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    ['iev-rev-de','iev-rev-am','iev-rev-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
+    toast('Revenu ajoute!', 'success');
+    logHistory('Revenu ajoute', eid, cat+' — '+desc, amt, {
+      Categorie:cat, Description:desc, Montant:_m(amt), Statut:st
+    });
+  }).catch(function(e){ toast('Erreur: '+e.message, 'error'); });
+}
+
+// ── Settings listener (load from Firestore) ─────────────────────────────────
+function _initSettingsListener() {
+  db.collection('settings').doc('app').onSnapshot(function(snap) {
+    if (snap.exists) {
+      var d = snap.data();
+      if (d.expCats && d.expCats.length) _settings.expCats = d.expCats;
+      if (d.revCats && d.revCats.length) _settings.revCats = d.revCats;
+      if (d.payers  && d.payers.length)  _settings.payers  = d.payers;
+    }
+  });
+}

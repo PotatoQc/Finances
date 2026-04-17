@@ -99,35 +99,8 @@
     </div>
     <button class="btn bw" style="margin-top:14px" onclick="addEvent()">+ Creer evenement</button>
   </div>
-  <div class="card"><div class="ct">Nouvelle depense</div>
-    <div class="frow">
-      <div><lbl>Evenement</lbl><select id="exp-ev"><option value="">-- Choisir --</option></select></div>
-      <div><lbl>Categorie</lbl><select id="exp-ca"><option>Lieu</option><option>Commissions</option><option>Salaires</option><option>DJ</option><option>Contenu/Video</option><option>Marketing</option><option>Accessoires</option><option>Materiel</option><option>Transport</option><option>Nourriture</option><option>Fonds commun</option><option>Autre</option></select></div>
-      <div><lbl>Description</lbl><input id="exp-de" placeholder="Ex: Location salle"></div>
-      <div><lbl>Montant ($)</lbl><input id="exp-am" type="number" step="0.01"></div>
-    </div>
-    <div class="frow">
-      <div><lbl>Paye par</lbl><select id="exp-pb"><option>LP Cote</option><option>LP Viens</option><option>Vincent</option><option>Fonds commun</option></select></div>
-      <div><lbl>Statut</lbl><select id="exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>
-      <div><lbl>Remboursable</lbl><select id="exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>
-      <div><lbl>Notes</lbl><input id="exp-no" placeholder="Optionnel"></div>
-    </div>
-    <button class="btn bw" onclick="addExpense()">+ Ajouter depense</button>
-  </div>
-  <div class="card"><div class="ct">Nouveau revenu</div>
-    <div class="frow">
-      <div><lbl>Evenement</lbl><select id="rev-ev"><option value="">-- Choisir --</option></select></div>
-      <div><lbl>Categorie</lbl><select id="rev-ca"><option>Billets en ligne</option><option>Vente porte</option><option>Cash porte</option><option>Remboursement salle</option><option>Virements</option><option>Commandite</option><option>Autre</option></select></div>
-      <div><lbl>Description</lbl><input id="rev-de" placeholder="Ex: Vente Stripe"></div>
-      <div><lbl>Montant ($)</lbl><input id="rev-am" type="number" step="0.01"></div>
-    </div>
-    <div class="frow">
-      <div><lbl>Statut</lbl><select id="rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>
-      <div><lbl>Notes</lbl><input id="rev-no" placeholder="Optionnel"></div>
-    </div>
-    <button class="btn bg2" onclick="addRevenue()">+ Ajouter revenu</button>
-  </div>
 </div>
+
 
 <div id="pg-graphs" class="pg">
   <div class="card"><div class="ct">Revenus vs Depenses par evenement</div>
