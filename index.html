@@ -111,6 +111,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .modal-row .rm{background:none;border:1px solid var(--red);color:var(--red);border-radius:5px;padding:4px 8px;cursor:pointer;font-size:.72rem}
 .modal-row .rm:hover{background:var(--red);color:#000}
 .pct-total{font-size:.78rem;margin:8px 0 4px;font-weight:700}
+.inline-form{margin-bottom:12px;padding:10px;border-radius:8px;background:rgba(15,23,42,.6);border:1px solid var(--border)}
+.inline-form .frow{margin-bottom:6px}
+
 </style>
 </head>
 <body>
@@ -197,35 +200,22 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <button class="btn bo" style="margin-top:6px;font-size:.72rem" onclick="addShareholderRow()">+ Ajouter actionnaire</button>
     </div>
     <button class="btn bw" style="margin-top:14px" onclick="addEvent()">+ Creer evenement</button>
+  
   </div>
-  <div class="card"><div class="ct">Nouvelle depense</div>
+
+  <div class="card admin-only"><div class="ct">Parametres categories</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Ces listes controlent les categories et payeurs proposes dans les formulaires d'evenement.</div>
     <div class="frow">
-      <div><lbl>Evenement</lbl><select id="exp-ev"><option value="">-- Choisir --</option></select></div>
-      <div><lbl>Categorie</lbl><select id="exp-ca"><option>Lieu</option><option>Commissions</option><option>Salaires</option><option>DJ</option><option>Contenu/Video</option><option>Marketing</option><option>Accessoires</option><option>Materiel</option><option>Transport</option><option>Nourriture</option><option>Fonds commun</option><option>Autre</option></select></div>
-      <div><lbl>Description</lbl><input id="exp-de" placeholder="Ex: Location salle"></div>
-      <div><lbl>Montant ($)</lbl><input id="exp-am" type="number" step="0.01"></div>
+      <div style="flex:1"><lbl>Categories depenses (une par ligne)</lbl><textarea id="cfg-exp-cats" rows="5" style="width:100%"></textarea></div>
+      <div style="flex:1"><lbl>Categories revenus (une par ligne)</lbl><textarea id="cfg-rev-cats" rows="5" style="width:100%"></textarea></div>
     </div>
-    <div class="frow">
-      <div><lbl>Paye par</lbl><select id="exp-pb"><option>LP Cote</option><option>LP Viens</option><option>Vincent</option><option>Fonds commun</option></select></div>
-      <div><lbl>Statut</lbl><select id="exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>
-      <div><lbl>Remboursable</lbl><select id="exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>
-      <div><lbl>Notes</lbl><input id="exp-no" placeholder="Optionnel"></div>
+    <div class="frow" style="margin-top:8px">
+      <div style="flex:1"><lbl>Paye par (une par ligne)</lbl><textarea id="cfg-payers" rows="4" style="width:100%"></textarea></div>
     </div>
-    <button class="btn bw" onclick="addExpense()">+ Ajouter depense</button>
+    <button class="btn bw" style="margin-top:10px" onclick="saveSettings()">Enregistrer les parametres</button>
   </div>
-  <div class="card"><div class="ct">Nouveau revenu</div>
-    <div class="frow">
-      <div><lbl>Evenement</lbl><select id="rev-ev"><option value="">-- Choisir --</option></select></div>
-      <div><lbl>Categorie</lbl><select id="rev-ca"><option>Billets en ligne</option><option>Vente porte</option><option>Cash porte</option><option>Remboursement salle</option><option>Virements</option><option>Commandite</option><option>Autre</option></select></div>
-      <div><lbl>Description</lbl><input id="rev-de" placeholder="Ex: Vente Stripe"></div>
-      <div><lbl>Montant ($)</lbl><input id="rev-am" type="number" step="0.01"></div>
-    </div>
-    <div class="frow">
-      <div><lbl>Statut</lbl><select id="rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>
-      <div><lbl>Notes</lbl><input id="rev-no" placeholder="Optionnel"></div>
-    </div>
-    <button class="btn bg2" onclick="addRevenue()">+ Ajouter revenu</button>
-  </div>
+</div>
+
 </div>
 
 <div id="pg-graphs" class="pg">
@@ -293,6 +283,28 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 
 
+
+<!-- EDIT EXP/REV MODAL -->
+<div id="edit-er-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:550;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;width:100%;max-width:440px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ct" style="margin:0" id="er-modal-title">Modifier</div>
+      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEditErModal()">✕</button>
+    </div>
+    <div class="frow">
+      <div style="flex:1"><lbl>Paye par</lbl><select id="er-paidBy"></select></div>
+      <div style="flex:1"><lbl>Statut</lbl><select id="er-status"></select></div>
+    </div>
+    <div class="frow">
+      <div style="flex:1"><lbl>Remboursable</lbl><select id="er-refund"><option value="non">Non</option><option value="oui">Oui</option></select></div>
+    </div>
+    <div class="frow">
+      <div style="flex:1"><lbl>Notes</lbl><textarea id="er-notes" rows="3" style="width:100%"></textarea></div>
+    </div>
+    <button class="btn bw" style="margin-top:12px;width:100%" onclick="saveEditEr()">Enregistrer</button>
+  </div>
+</div>
+
 <!-- HISTORY DETAIL MODAL -->
 <div id="hist-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto">
@@ -301,6 +313,29 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeHistModal()">✕</button>
     </div>
     <div id="hist-modal-body"></div>
+  </div>
+</div>
+
+
+<!-- EDIT EVENT INFO MODAL -->
+<div id="ev-info-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:460px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ct" style="margin:0">Modifier l'evenement</div>
+      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEvInfoModal()">✕</button>
+    </div>
+    <div class="frow">
+      <div style="flex:1"><lbl>Nom</lbl><input id="ev-edit-name"></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Date</lbl><input id="ev-edit-date" type="date"></div>
+      <div><lbl>Lieu</lbl><input id="ev-edit-lieu"></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Prix billet ($)</lbl><input id="ev-edit-prix" type="number" step="0.01"></div>
+      <div><lbl>Objectif billets</lbl><input id="ev-edit-obj" type="number" min="0"></div>
+    </div>
+    <button class="btn bw" style="margin-top:14px;width:100%" onclick="saveEvInfo()">Enregistrer</button>
   </div>
 </div>
 
@@ -338,6 +373,8 @@ var auth = firebase.auth();
 var _user = null;
 var _role = 'viewer';
 var _data = { events:[], expenses:[], revenues:[], users:[] };
+var _settings = { expCats:[], revCats:[], payers:[] };
+
 var _unsub = [];
 var _charts = {};
 
@@ -512,6 +549,38 @@ function _initListeners() {
 }
 
 
+
+var _editInfoEid = null;
+
+function openEvInfoModal(eid) {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  _editInfoEid = eid;
+  var ev = _data.events.find(function(e){return e.id===eid;});
+  if (!ev) return;
+  _g('ev-edit-name').value = ev.name||'';
+  _g('ev-edit-date').value = ev.date||'';
+  _g('ev-edit-lieu').value = ev.lieu||'';
+  _g('ev-edit-prix').value = ev.prix||0;
+  _g('ev-edit-obj').value = ev.objectif||'';
+  _g('ev-info-modal').style.display='flex';
+}
+
+function closeEvInfoModal() {
+  _g('ev-info-modal').style.display='none';
+  _editInfoEid = null;
+}
+
+function saveEvInfo() {
+  if (!_editInfoEid) return;
+  var nm=_g('ev-edit-name').value, dt=_g('ev-edit-date').value, li=_g('ev-edit-lieu').value;
+  var pr=Number(_g('ev-edit-prix').value)||0, obj=Number(_g('ev-edit-obj').value)||0;
+  db.collection('events').doc(_editInfoEid).update({ name:nm, date:dt, lieu:li, prix:pr, objectif:obj }).then(function(){
+    toast('Evenement mis a jour','success');
+    logHistory('Evenement mis a jour', _editInfoEid, nm, 0, { 'Nom': nm, 'Date': dt, 'Lieu': li, 'Prix billet': _m(pr), 'Objectif billets': obj });
+    closeEvInfoModal();
+  }).catch(function(e){ alert('Erreur: '+e.message); });
+}
+
 // ============================================================
 // SHAREHOLDER FORM (create event)
 // ============================================================
@@ -640,6 +709,30 @@ function saveEvConfig() {
       closeEvModal();
       // onSnapshot will fire -> _refresh() -> openEvent(_currentEid) auto re-render
     }).catch(function(e){ alert('Erreur: '+e.message); });
+}
+
+
+function _prefillSettingsForm() {
+  var e1=_g('cfg-exp-cats'), e2=_g('cfg-rev-cats'), e3=_g('cfg-payers');
+  if (e1) e1.value = (_settings.expCats||[]).join('
+');
+  if (e2) e2.value = (_settings.revCats||[]).join('
+');
+  if (e3) e3.value = (_settings.payers||[]).join('
+');
+}
+
+function saveSettings() {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  var exp = _g('cfg-exp-cats').value.split(/
++/).map(function(s){return s.trim();}).filter(Boolean);
+  var rev = _g('cfg-rev-cats').value.split(/
++/).map(function(s){return s.trim();}).filter(Boolean);
+  var pay = _g('cfg-payers').value.split(/
++/).map(function(s){return s.trim();}).filter(Boolean);
+  db.collection('settings').doc('app').set({ expCats:exp, revCats:rev, payers:pay }, { merge:true }).then(function(){
+    toast('Parametres sauvegardes','success');
+  }).catch(function(e){ alert('Erreur: '+e.message); });
 }
 
 // ============================================================
@@ -866,8 +959,11 @@ function delEvent(id) {
 // EXPENSES CRUD
 // ============================================================
 function addExpense() {
+  // Legacy form (onglet Ajouter) - ignore si les champs n'existent plus
+  var evSel = _g('exp-ev');
+  if (!evSel) { alert('Utilisez la section Depenses dans la fiche de l'evenement.'); return; }
   if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
-  var eid = _g('exp-ev').value, amt = _g('exp-am').value;
+  var eid = evSel.value, amt = _g('exp-am').value;
   if (!eid) { alert('Choisissez un evenement'); return; }
   if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
   var cat = _g('exp-ca').value, desc = _g('exp-de').value;
@@ -877,7 +973,7 @@ function addExpense() {
     refund:_g('exp-rf').value, notes:_g('exp-no').value,
     addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function() {
-    ['exp-de','exp-am','exp-no'].forEach(function(id){_g(id).value='';});
+    ['exp-de','exp-am','exp-no'].forEach(function(id){ var el=_g(id); if(el) el.value='';});
     toast('Depense ajoutee!','success');
     logHistory('Depense ajoutee', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Fournisseur': _g('exp-sup').value||'-', 'Statut': _g('exp-status').value });
   }).catch(function(e) { alert('Erreur: '+e.message); });
@@ -898,8 +994,10 @@ function delExpense(id, eid, desc_, amt_) {
 // REVENUES CRUD
 // ============================================================
 function addRevenue() {
+  var evSel = _g('rev-ev');
+  if (!evSel) { alert('Utilisez la section Revenus dans la fiche de l'evenement.'); return; }
   if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
-  var eid = _g('rev-ev').value, amt = _g('rev-am').value;
+  var eid = evSel.value, amt = _g('rev-am').value;
   if (!eid) { alert('Choisissez un evenement'); return; }
   if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
   var cat = _g('rev-ca').value, desc = _g('rev-de').value;
@@ -908,7 +1006,7 @@ function addRevenue() {
     status:_g('rev-st').value, notes:_g('rev-no').value,
     addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function() {
-    ['rev-de','rev-am','rev-no'].forEach(function(id){_g(id).value='';});
+    ['rev-de','rev-am','rev-no'].forEach(function(id){ var el=_g(id); if(el) el.value='';});
     toast('Revenu ajoute!','success');
     logHistory('Revenu ajoute', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Payeur': _g('rev-qui').value||'-' });
   }).catch(function(e) { alert('Erreur: '+e.message); });
@@ -982,7 +1080,7 @@ function openEvent(eid) {
     + '<div class="ev-detail-header"><div>'
     + '<div class="ev-detail-title">'+ev.name+'</div>'
     + '<div class="ev-detail-sub">'+(ev.date||'')+(ev.lieu?' &nbsp;·&nbsp; '+ev.lieu:'')+'</div>'
-    + progHTML + '</div>' + delBtn + '</div>'
+    + progHTML + '</div>' + (canDel ? '<div style="display:flex;gap:8px"><button class="btn bo" style="font-size:.72rem" onclick="openEvInfoModal(\''+eid+'\')">Modifier</button>'+delBtn+'</div>' : '') + '</div>'
     + '<div class="grid">'
     + '<div class="stat"><div class="sl">Revenus</div><div class="sv g">'+_m(sp.rev)+'</div></div>'
     + '<div class="stat"><div class="sl">Depenses</div><div class="sv r">'+_m(sp.dep)+'</div></div>'
@@ -996,14 +1094,94 @@ function openEvent(eid) {
     + '<button id="tb-dep" class="tab on" onclick="showTab(\'dep\',\'ev-tabs\')">Depenses ('+exps.length+')</button>'
     + '<button id="tb-rev2" class="tab" onclick="showTab(\'rev2\',\'ev-tabs\')">Revenus ('+revs.length+')</button>'
     + '</div>'
-    + '<div id="tc-dep" class="tab-content on"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table></div>'
-    + '<div id="tc-rev2" class="tab-content"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table></div>'
+    + '<div id="tc-dep" class="tab-content on">'
+    + '<div class="inline-form">'
+    + '<div class="frow">'
+    + '<div><lbl>Categorie</lbl><select id="ev-exp-ca"></select></div>'
+    + '<div><lbl>Description</lbl><input id="ev-exp-de" placeholder="Ex: Location salle"></div>'
+    + '<div><lbl>Montant ($)</lbl><input id="ev-exp-am" type="number" step="0.01"></div>'
+    + '</div>'
+    + '<div class="frow">'
+    + '<div><lbl>Paye par</lbl><select id="ev-exp-pb"></select></div>'
+    + '<div><lbl>Statut</lbl><select id="ev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'
+    + '<div><lbl>Remboursable</lbl><select id="ev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'
+    + '<div><lbl>Notes</lbl><input id="ev-exp-no" placeholder="Optionnel"></div>'
+    + '</div>'
+    + '<button class="btn bw" style="margin-top:8px" onclick="addExpenseInline(\''+eid+'\')">+ Ajouter depense</button>'
+    + '</div>'
+    + '<table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table>'
+    + '</div>'
+    + '<div id="tc-rev2" class="tab-content">'
+    + '<div class="inline-form">'
+    + '<div class="frow">'
+    + '<div><lbl>Categorie</lbl><select id="ev-rev-ca"></select></div>'
+    + '<div><lbl>Description</lbl><input id="ev-rev-de" placeholder="Ex: Vente Stripe"></div>'
+    + '<div><lbl>Montant ($)</lbl><input id="ev-rev-am" type="number" step="0.01"></div>'
+    + '</div>'
+    + '<div class="frow">'
+    + '<div><lbl>Statut</lbl><select id="ev-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>'
+    + '<div><lbl>Notes</lbl><input id="ev-rev-no" placeholder="Optionnel"></div>'
+    + '</div>'
+    + '<button class="btn bg2" style="margin-top:8px" onclick="addRevenueInline(\''+eid+'\')">+ Ajouter revenu</button>'
+    + '</div>'
+    + '<table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table>'
+    + '</div>'
     + '</div>';
 
   document.querySelectorAll('.pg').forEach(function(el) { el.classList.remove('on'); });
   document.querySelectorAll('.nb').forEach(function(el) { el.classList.remove('on'); });
   var det = _g('pg-ev-detail');
   if (det) { det.innerHTML = html; det.classList.add('on'); }
+}
+
+
+function _fillInlineCatsAndPayers() {
+  // Categories from settings or fallback
+  var expSel = _g('ev-exp-ca'), revSel = _g('ev-rev-ca');
+  var expCats = (_settings.expCats && _settings.expCats.length) ? _settings.expCats : ['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre'];
+  var revCats = (_settings.revCats && _settings.revCats.length) ? _settings.revCats : ['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre'];
+  if (expSel) { expSel.innerHTML = expCats.map(function(c){return '<option>'+c+'</option>';}).join(''); }
+  if (revSel) { revSel.innerHTML = revCats.map(function(c){return '<option>'+c+'</option>';}).join(''); }
+  var paySel = _g('ev-exp-pb');
+  if (paySel) {
+    var payers = (_settings.payers && _settings.payers.length) ? _settings.payers : ['LP Cote','LP Viens','Vincent','Fonds commun'];
+    paySel.innerHTML = payers.map(function(p){return '<option>'+p+'</option>';}).join('');
+  }
+}
+
+function addExpenseInline(eid) {
+  if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
+  var amt = _g('ev-exp-am').value;
+  if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
+  var cat = _g('ev-exp-ca').value, desc = _g('ev-exp-de').value;
+  var paidBy = _g('ev-exp-pb').value, st = _g('ev-exp-st').value, rf = _g('ev-exp-rf').value, no = _g('ev-exp-no').value;
+  db.collection('expenses').add({
+    eventId:eid, cat:cat, desc:desc, amount:Number(amt),
+    paidBy:paidBy, status:st, refund:rf, notes:no,
+    addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    ['ev-exp-de','ev-exp-am','ev-exp-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
+    toast('Depense ajoutee!','success');
+    logHistory('Depense ajoutee', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Paye par': paidBy, 'Statut': st, 'Remboursable': rf });
+    openEvent(eid);
+  }).catch(function(e){ alert('Erreur: '+e.message); });
+}
+
+function addRevenueInline(eid) {
+  if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
+  var amt = _g('ev-rev-am').value;
+  if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
+  var cat = _g('ev-rev-ca').value, desc = _g('ev-rev-de').value;
+  var st = _g('ev-rev-st').value, no = _g('ev-rev-no').value;
+  db.collection('revenues').add({
+    eventId:eid, cat:cat, desc:desc, amount:Number(amt),
+    status:st, notes:no, addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    ['ev-rev-de','ev-rev-am','ev-rev-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
+    toast('Revenu ajoute!','success');
+    logHistory('Revenu ajoute', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Statut': st });
+    openEvent(eid);
+  }).catch(function(e){ alert('Erreur: '+e.message); });
 }
 
 // ============================================================
