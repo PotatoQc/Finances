@@ -143,22 +143,57 @@ body { padding-top: 0; }
 
 /* Keep the main navigation aligned with the logo/title row */
 body > nav {
-  margin-top: -8px;
+  margin-top: 0;
+  padding-top: 0;
 }
 body > nav .nb {
   line-height: 1;
 }
 body > nav {
   background: transparent;
+  box-shadow: none;
 }
 body > nav .nb {
-  background: transparent;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 body > nav .nb.on {
-  background: transparent;
+  background: transparent !important;
 }
 
 @media (max-width: 1200px) {
   body > nav { padding-left: 8px; padding-right: 8px; }
   body > nav .nb { padding: 13px 12px 10px; font-size: .74rem; }
 }
+
+/* Nav alignment with title */
+header + nav {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+header + nav .nb {
+  display: inline-flex;
+  align-items: center;
+  height: 58px;
+  background: transparent !important;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: rgba(255,255,255,.48);
+}
+header + nav .nb.on {
+  background: transparent !important;
+  color: #fff;
+}
+header + nav .user-info {
+  display: flex;
+  align-items: center;
+  height: 58px;
+}
+
+#pg-ev-detail { padding-top: 0; }
+#pg-ev-detail .card:first-child { margin-top: 0; }
