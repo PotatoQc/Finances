@@ -111,9 +111,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .modal-row .rm{background:none;border:1px solid var(--red);color:var(--red);border-radius:5px;padding:4px 8px;cursor:pointer;font-size:.72rem}
 .modal-row .rm:hover{background:var(--red);color:#000}
 .pct-total{font-size:.78rem;margin:8px 0 4px;font-weight:700}
-.inline-form{margin-bottom:12px;padding:10px;border-radius:8px;background:rgba(15,23,42,.6);border:1px solid var(--border)}
-.inline-form .frow{margin-bottom:6px}
 
+.inline-form{background:rgba(15,23,42,.7);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px}
+.inline-form .frow{margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -144,8 +144,9 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <nav>
     <button id="nb-dash" class="nb on" onclick="showPage('dash')">Dashboard</button>
     <button id="nb-ev-list" class="nb" onclick="showPage('ev-list')">Evenements</button>
-    <button id="nb-add" class="nb" onclick="showPage('add')">Ajouter</button>
+    <button id="nb-add" class="nb" onclick="showPage('add')">Creer evenement</button>
     <button id="nb-graphs" class="nb" onclick="showPage('graphs')">Graphiques</button>
+    <button id="nb-fc" class="nb" onclick="showPage('fc');_rFc()">Fonds commun</button>
     <button id="nb-history" class="nb" onclick="showPage('history')">Historique</button>
     <button id="nb-users" class="nb admin-only" onclick="showPage('users')">Utilisateurs</button>
     <button id="nb-ex" class="nb" onclick="showPage('ex')">Exporter</button>
@@ -200,23 +201,19 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <button class="btn bo" style="margin-top:6px;font-size:.72rem" onclick="addShareholderRow()">+ Ajouter actionnaire</button>
     </div>
     <button class="btn bw" style="margin-top:14px" onclick="addEvent()">+ Creer evenement</button>
-  
   </div>
-
-  <div class="card admin-only"><div class="ct">Parametres categories</div>
-    <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Ces listes controlent les categories et payeurs proposes dans les formulaires d'evenement.</div>
+  <div class="card admin-only">
+    <div class="ct">Parametres</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Categories et payeurs utilises dans les formulaires. Une valeur par ligne.</div>
     <div class="frow">
-      <div style="flex:1"><lbl>Categories depenses (une par ligne)</lbl><textarea id="cfg-exp-cats" rows="5" style="width:100%"></textarea></div>
-      <div style="flex:1"><lbl>Categories revenus (une par ligne)</lbl><textarea id="cfg-rev-cats" rows="5" style="width:100%"></textarea></div>
+      <div style="flex:1"><lbl>Categories depenses</lbl><textarea id="cfg-exp-cats" rows="7" style="width:100%"></textarea></div>
+      <div style="flex:1"><lbl>Categories revenus</lbl><textarea id="cfg-rev-cats" rows="7" style="width:100%"></textarea></div>
+      <div style="flex:1"><lbl>Paye par</lbl><textarea id="cfg-payers" rows="7" style="width:100%"></textarea></div>
     </div>
-    <div class="frow" style="margin-top:8px">
-      <div style="flex:1"><lbl>Paye par (une par ligne)</lbl><textarea id="cfg-payers" rows="4" style="width:100%"></textarea></div>
-    </div>
-    <button class="btn bw" style="margin-top:10px" onclick="saveSettings()">Enregistrer les parametres</button>
+    <button class="btn bw" style="margin-top:10px" onclick="saveSettings()">Enregistrer</button>
   </div>
 </div>
 
-</div>
 
 <div id="pg-graphs" class="pg">
   <div class="card"><div class="ct">Revenus vs Depenses par evenement</div>
@@ -283,28 +280,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 
 
 
-
-<!-- EDIT EXP/REV MODAL -->
-<div id="edit-er-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:550;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;width:100%;max-width:440px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="ct" style="margin:0" id="er-modal-title">Modifier</div>
-      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEditErModal()">✕</button>
-    </div>
-    <div class="frow">
-      <div style="flex:1"><lbl>Paye par</lbl><select id="er-paidBy"></select></div>
-      <div style="flex:1"><lbl>Statut</lbl><select id="er-status"></select></div>
-    </div>
-    <div class="frow">
-      <div style="flex:1"><lbl>Remboursable</lbl><select id="er-refund"><option value="non">Non</option><option value="oui">Oui</option></select></div>
-    </div>
-    <div class="frow">
-      <div style="flex:1"><lbl>Notes</lbl><textarea id="er-notes" rows="3" style="width:100%"></textarea></div>
-    </div>
-    <button class="btn bw" style="margin-top:12px;width:100%" onclick="saveEditEr()">Enregistrer</button>
-  </div>
-</div>
-
 <!-- HISTORY DETAIL MODAL -->
 <div id="hist-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:600;align-items:center;justify-content:center">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto">
@@ -316,17 +291,58 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
+<!-- EDIT EVENT MODAL -->
+<div id="ev-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div class="ct" style="margin:0">Modifier les parametres</div>
+      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEvModal()">✕ Fermer</button>
+    </div>
+    <div id="ev-modal-content"></div>
+  </div>
+</div>
 
-<!-- EDIT EVENT INFO MODAL -->
-<div id="ev-info-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:460px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div class="ct" style="margin:0">Modifier l'evenement</div>
-      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEvInfoModal()">✕</button>
+<div id="pg-fc" class="pg">
+  <div class="card">
+    <div class="ct">Solde du Fonds commun</div>
+    <div class="grid" id="fc-stats"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Historique des mouvements</div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Date</th><th>Type</th><th>Evenement</th><th>Description</th><th>Montant</th><th>Solde</th></tr></thead>
+      <tbody id="fc-tb"><tr><td colspan="6" class="empty">Aucun mouvement</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- MODAL: Edit expense/revenue -->
+<div id="edit-er-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:550;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;width:100%;max-width:440px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ct" style="margin:0" id="er-modal-title">Modifier</div>
+      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEditErModal()">&#x2715;</button>
+    </div>
+    <div id="er-paidby-row" class="frow">
+      <div style="flex:1"><lbl>Paye par</lbl><select id="er-paidBy" style="width:100%"></select></div>
     </div>
     <div class="frow">
-      <div style="flex:1"><lbl>Nom</lbl><input id="ev-edit-name"></div>
+      <div style="flex:1"><lbl>Statut</lbl><select id="er-status" style="width:100%"></select></div>
+      <div style="flex:1" id="er-refund-row"><lbl>Remboursable</lbl><select id="er-refund" style="width:100%"><option value="non">Non</option><option value="oui">Oui</option></select></div>
     </div>
+    <div class="frow"><div style="flex:1"><lbl>Notes</lbl><textarea id="er-notes" rows="3" style="width:100%"></textarea></div></div>
+    <button class="btn bw" style="margin-top:12px;width:100%" onclick="saveEditEr()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- MODAL: Edit event info -->
+<div id="ev-info-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ct" style="margin:0">Modifier l&#39;evenement</div>
+      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEvInfoModal()">&#x2715;</button>
+    </div>
+    <div class="frow"><div style="flex:1"><lbl>Nom</lbl><input id="ev-edit-name" style="width:100%"></div></div>
     <div class="frow">
       <div><lbl>Date</lbl><input id="ev-edit-date" type="date"></div>
       <div><lbl>Lieu</lbl><input id="ev-edit-lieu"></div>
@@ -339,14 +355,19 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
-<!-- EDIT EVENT MODAL -->
-<div id="ev-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center">
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
-      <div class="ct" style="margin:0">Modifier les parametres</div>
-      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeEvModal()">✕ Fermer</button>
+<!-- MODAL: Notes checklist -->
+<div id="notes-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ct" style="margin:0">Notes &amp; Checklist</div>
+      <button class="btn bo" style="padding:4px 10px;font-size:.72rem" onclick="closeNotesModal()">&#x2715;</button>
     </div>
-    <div id="ev-modal-content"></div>
+    <div id="notes-modal-list" style="margin-bottom:10px"></div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <input id="notes-new-item" placeholder="Nouvelle note..." style="flex:1" onkeydown="if(event.key==='Enter')addNoteItem()">
+      <button class="btn bw" onclick="addNoteItem()">+ Ajouter</button>
+    </div>
+    <button class="btn bg2" style="margin-top:12px;width:100%" onclick="saveNotes()">Enregistrer la checklist</button>
   </div>
 </div>
 </div>
@@ -373,8 +394,6 @@ var auth = firebase.auth();
 var _user = null;
 var _role = 'viewer';
 var _data = { events:[], expenses:[], revenues:[], users:[] };
-var _settings = { expCats:[], revCats:[], payers:[] };
-
 var _unsub = [];
 var _charts = {};
 
@@ -544,42 +563,18 @@ function _initListeners() {
       _data.users = [];
       s.forEach(function(d) { _data.users.push(Object.assign({ uid:d.id }, d.data())); });
       _rUsers();
+    }),
+    db.collection('settings').doc('app').onSnapshot(function(snap) {
+      if(snap.exists){ var d=snap.data();
+        if(d.expCats&&d.expCats.length) _settings.expCats=d.expCats;
+        if(d.revCats&&d.revCats.length) _settings.revCats=d.revCats;
+        if(d.payers&&d.payers.length) _settings.payers=d.payers;
+      }
+      _prefillSettingsForm();
     })
   );
 }
 
-
-
-var _editInfoEid = null;
-
-function openEvInfoModal(eid) {
-  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
-  _editInfoEid = eid;
-  var ev = _data.events.find(function(e){return e.id===eid;});
-  if (!ev) return;
-  _g('ev-edit-name').value = ev.name||'';
-  _g('ev-edit-date').value = ev.date||'';
-  _g('ev-edit-lieu').value = ev.lieu||'';
-  _g('ev-edit-prix').value = ev.prix||0;
-  _g('ev-edit-obj').value = ev.objectif||'';
-  _g('ev-info-modal').style.display='flex';
-}
-
-function closeEvInfoModal() {
-  _g('ev-info-modal').style.display='none';
-  _editInfoEid = null;
-}
-
-function saveEvInfo() {
-  if (!_editInfoEid) return;
-  var nm=_g('ev-edit-name').value, dt=_g('ev-edit-date').value, li=_g('ev-edit-lieu').value;
-  var pr=Number(_g('ev-edit-prix').value)||0, obj=Number(_g('ev-edit-obj').value)||0;
-  db.collection('events').doc(_editInfoEid).update({ name:nm, date:dt, lieu:li, prix:pr, objectif:obj }).then(function(){
-    toast('Evenement mis a jour','success');
-    logHistory('Evenement mis a jour', _editInfoEid, nm, 0, { 'Nom': nm, 'Date': dt, 'Lieu': li, 'Prix billet': _m(pr), 'Objectif billets': obj });
-    closeEvInfoModal();
-  }).catch(function(e){ alert('Erreur: '+e.message); });
-}
 
 // ============================================================
 // SHAREHOLDER FORM (create event)
@@ -709,30 +704,6 @@ function saveEvConfig() {
       closeEvModal();
       // onSnapshot will fire -> _refresh() -> openEvent(_currentEid) auto re-render
     }).catch(function(e){ alert('Erreur: '+e.message); });
-}
-
-
-function _prefillSettingsForm() {
-  var e1=_g('cfg-exp-cats'), e2=_g('cfg-rev-cats'), e3=_g('cfg-payers');
-  if (e1) e1.value = (_settings.expCats||[]).join('
-');
-  if (e2) e2.value = (_settings.revCats||[]).join('
-');
-  if (e3) e3.value = (_settings.payers||[]).join('
-');
-}
-
-function saveSettings() {
-  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
-  var exp = _g('cfg-exp-cats').value.split(/
-+/).map(function(s){return s.trim();}).filter(Boolean);
-  var rev = _g('cfg-rev-cats').value.split(/
-+/).map(function(s){return s.trim();}).filter(Boolean);
-  var pay = _g('cfg-payers').value.split(/
-+/).map(function(s){return s.trim();}).filter(Boolean);
-  db.collection('settings').doc('app').set({ expCats:exp, revCats:rev, payers:pay }, { merge:true }).then(function(){
-    toast('Parametres sauvegardes','success');
-  }).catch(function(e){ alert('Erreur: '+e.message); });
 }
 
 // ============================================================
@@ -959,11 +930,8 @@ function delEvent(id) {
 // EXPENSES CRUD
 // ============================================================
 function addExpense() {
-  // Legacy form (onglet Ajouter) - ignore si les champs n'existent plus
-  var evSel = _g('exp-ev');
-  if (!evSel) { alert('Utilisez la section Depenses dans la fiche de l'evenement.'); return; }
   if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
-  var eid = evSel.value, amt = _g('exp-am').value;
+  var eid = _g('exp-ev').value, amt = _g('exp-am').value;
   if (!eid) { alert('Choisissez un evenement'); return; }
   if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
   var cat = _g('exp-ca').value, desc = _g('exp-de').value;
@@ -973,7 +941,7 @@ function addExpense() {
     refund:_g('exp-rf').value, notes:_g('exp-no').value,
     addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function() {
-    ['exp-de','exp-am','exp-no'].forEach(function(id){ var el=_g(id); if(el) el.value='';});
+    ['exp-de','exp-am','exp-no'].forEach(function(id){_g(id).value='';});
     toast('Depense ajoutee!','success');
     logHistory('Depense ajoutee', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Fournisseur': _g('exp-sup').value||'-', 'Statut': _g('exp-status').value });
   }).catch(function(e) { alert('Erreur: '+e.message); });
@@ -994,10 +962,8 @@ function delExpense(id, eid, desc_, amt_) {
 // REVENUES CRUD
 // ============================================================
 function addRevenue() {
-  var evSel = _g('rev-ev');
-  if (!evSel) { alert('Utilisez la section Revenus dans la fiche de l'evenement.'); return; }
   if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
-  var eid = evSel.value, amt = _g('rev-am').value;
+  var eid = _g('rev-ev').value, amt = _g('rev-am').value;
   if (!eid) { alert('Choisissez un evenement'); return; }
   if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
   var cat = _g('rev-ca').value, desc = _g('rev-de').value;
@@ -1006,7 +972,7 @@ function addRevenue() {
     status:_g('rev-st').value, notes:_g('rev-no').value,
     addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function() {
-    ['rev-de','rev-am','rev-no'].forEach(function(id){ var el=_g(id); if(el) el.value='';});
+    ['rev-de','rev-am','rev-no'].forEach(function(id){_g(id).value='';});
     toast('Revenu ajoute!','success');
     logHistory('Revenu ajoute', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Payeur': _g('rev-qui').value||'-' });
   }).catch(function(e) { alert('Erreur: '+e.message); });
@@ -1047,7 +1013,16 @@ function openEvent(eid) {
       + '<div class="prog-bar-bg"><div class="prog-bar ' + cls + '" style="width:' + pct + '%"></div></div></div>';
   }
 
-  var notesHTML = ev.notes ? '<div class="notes-card"><div class="ct">Notes</div><div style="font-size:.84rem;line-height:1.6">' + ev.notes + '</div></div>' : '';
+  var _evNotes = Array.isArray(ev.notes) ? ev.notes : (ev.notes ? [{text:String(ev.notes),done:false}] : []);
+  var _editNoteBtn = (_role==='admin'||_role==='manager') ? '<button class="btn bo" style="padding:3px 9px;font-size:.7rem;margin-left:8px" onclick="openNotesModal(\''+eid+'\')" title="Modifier checklist">&#9998; Modifier</button>' : '';
+  var _checkItems = _evNotes.map(function(n,i){
+    var doneStyle = n.done ? 'text-decoration:line-through;color:var(--muted)' : '';
+    var icon = n.done ? '&#9745;' : '&#9744;';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)">'
+      +'<span style="font-size:1.15rem;cursor:pointer" onclick="_toggleNote(\''+eid+'\','+i+')">'+icon+'</span>'
+      +'<span style="'+doneStyle+'">'+n.text+'</span></div>';
+  }).join('');
+  var notesHTML = '<div class="notes-card"><div style="display:flex;align-items:center;margin-bottom:8px"><div class="ct" style="margin:0">Notes &amp; Checklist</div>'+_editNoteBtn+'</div>'+(_checkItems||'<div style="color:var(--muted);font-size:.82rem">Aucune note</div>')+'</div>';
 
   var colors = ['y','p','g','b','w'];
   var splitCards = [];
@@ -1063,14 +1038,16 @@ function openEvent(eid) {
 
   var expRows = exps.length ? exps.map(function(e) {
     var bc = e.status=='paye'?'jg':'jy', sl = e.status=='paye'?'Paye':'En attente';
-    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem" onclick="delExpense(\''+e.id+'\',\''+eid+'\')">✕</button>' : '';
-    return '<tr><td><span class="bj jw">'+e.cat+'</span></td><td>'+(e.desc||'-')+'</td><td class="r">'+_m(e.amount)+'</td><td>'+e.paidBy+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(e.refund||'-')+'</td><td>'+(e.notes||'-')+'</td><td>'+db2+'</td></tr>';
+    var eBtn = (_role==='admin'||_role==='manager') ? '<button class="btn bo" style="padding:2px 6px;font-size:.65rem;margin-right:3px" onclick="openEditExpense(\''+eid+'\',\''+e.id+'\')">&#9998;</button>' : '';
+    var dBtn = canDel ? '<button class="btn br2" style="padding:2px 6px;font-size:.65rem" onclick="delExpense(\''+e.id+'\',\''+eid+'\',\''+encodeURIComponent(e.desc||e.cat||'')+'\','+e.amount+')">&#x2715;</button>' : '';
+    return '<tr><td><span class="bj jw">'+e.cat+'</span></td><td>'+(e.desc||'-')+'</td><td class="r">'+_m(e.amount)+'</td><td>'+e.paidBy+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(e.refund||'-')+'</td><td>'+(e.notes||'-')+'</td><td style="white-space:nowrap">'+eBtn+dBtn+'</td></tr>';
   }).join('') : '<tr><td colspan="8" class="empty">Aucune depense</td></tr>';
 
   var revRows = revs.length ? revs.map(function(r) {
     var bc = r.status=='recu'?'jg':'jy', sl = r.status=='recu'?'Recu':'En attente';
-    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem" onclick="delRevenue(\''+r.id+'\',\''+eid+'\')">✕</button>' : '';
-    return '<tr><td><span class="bj jg">'+r.cat+'</span></td><td>'+(r.desc||'-')+'</td><td class="g">'+_m(r.amount)+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(r.notes||'-')+'</td><td>'+db2+'</td></tr>';
+    var eBtn = (_role==='admin'||_role==='manager') ? '<button class="btn bo" style="padding:2px 6px;font-size:.65rem;margin-right:3px" onclick="openEditRevenue(\''+eid+'\',\''+r.id+'\')">&#9998;</button>' : '';
+    var dBtn = canDel ? '<button class="btn br2" style="padding:2px 6px;font-size:.65rem" onclick="delRevenue(\''+r.id+'\',\''+eid+'\',\''+encodeURIComponent(r.desc||r.cat||'')+'\','+r.amount+')">&#x2715;</button>' : '';
+    return '<tr><td><span class="bj jg">'+r.cat+'</span></td><td>'+(r.desc||'-')+'</td><td class="g">'+_m(r.amount)+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(r.notes||'-')+'</td><td style="white-space:nowrap">'+eBtn+dBtn+'</td></tr>';
   }).join('') : '<tr><td colspan="6" class="empty">Aucun revenu</td></tr>';
 
   var delBtn = canDel ? '<button class="btn br2" style="margin-left:auto" onclick="delEvent(\''+eid+'\')">Supprimer</button>' : '';
@@ -1080,7 +1057,7 @@ function openEvent(eid) {
     + '<div class="ev-detail-header"><div>'
     + '<div class="ev-detail-title">'+ev.name+'</div>'
     + '<div class="ev-detail-sub">'+(ev.date||'')+(ev.lieu?' &nbsp;·&nbsp; '+ev.lieu:'')+'</div>'
-    + progHTML + '</div>' + (canDel ? '<div style="display:flex;gap:8px"><button class="btn bo" style="font-size:.72rem" onclick="openEvInfoModal(\''+eid+'\')">Modifier</button>'+delBtn+'</div>' : '') + '</div>'
+    + progHTML + '</div><div style="display:flex;gap:6px">'+editEvBtn+delBtn+'</div></div>'
     + '<div class="grid">'
     + '<div class="stat"><div class="sl">Revenus</div><div class="sv g">'+_m(sp.rev)+'</div></div>'
     + '<div class="stat"><div class="sl">Depenses</div><div class="sv r">'+_m(sp.dep)+'</div></div>'
@@ -1097,32 +1074,32 @@ function openEvent(eid) {
     + '<div id="tc-dep" class="tab-content on">'
     + '<div class="inline-form">'
     + '<div class="frow">'
-    + '<div><lbl>Categorie</lbl><select id="ev-exp-ca"></select></div>'
-    + '<div><lbl>Description</lbl><input id="ev-exp-de" placeholder="Ex: Location salle"></div>'
-    + '<div><lbl>Montant ($)</lbl><input id="ev-exp-am" type="number" step="0.01"></div>'
+    + '<div><lbl>Categorie</lbl><select id="iev-exp-ca">'+_getCatOptions('exp')+'</select></div>'
+    + '<div style="flex:2"><lbl>Description</lbl><input id="iev-exp-de" placeholder="Ex: Location salle"></div>'
+    + '<div><lbl>Montant ($)</lbl><input id="iev-exp-am" type="number" step="0.01" style="width:90px"></div>'
     + '</div>'
     + '<div class="frow">'
-    + '<div><lbl>Paye par</lbl><select id="ev-exp-pb"></select></div>'
-    + '<div><lbl>Statut</lbl><select id="ev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'
-    + '<div><lbl>Remboursable</lbl><select id="ev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'
-    + '<div><lbl>Notes</lbl><input id="ev-exp-no" placeholder="Optionnel"></div>'
+    + '<div><lbl>Paye par</lbl><select id="iev-exp-pb">'+_getPayerOptions()+'</select></div>'
+    + '<div><lbl>Statut</lbl><select id="iev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'
+    + '<div><lbl>Remb.</lbl><select id="iev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'
+    + '<div style="flex:2"><lbl>Notes</lbl><input id="iev-exp-no" placeholder="Optionnel"></div>'
     + '</div>'
-    + '<button class="btn bw" style="margin-top:8px" onclick="addExpenseInline(\''+eid+'\')">+ Ajouter depense</button>'
+    + '<button class="btn bw" style="margin-top:6px" onclick="addExpInline(\''+eid+'\')" >+ Ajouter depense</button>'
     + '</div>'
     + '<table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table>'
     + '</div>'
     + '<div id="tc-rev2" class="tab-content">'
     + '<div class="inline-form">'
     + '<div class="frow">'
-    + '<div><lbl>Categorie</lbl><select id="ev-rev-ca"></select></div>'
-    + '<div><lbl>Description</lbl><input id="ev-rev-de" placeholder="Ex: Vente Stripe"></div>'
-    + '<div><lbl>Montant ($)</lbl><input id="ev-rev-am" type="number" step="0.01"></div>'
+    + '<div><lbl>Categorie</lbl><select id="iev-rev-ca">'+_getCatOptions('rev')+'</select></div>'
+    + '<div style="flex:2"><lbl>Description</lbl><input id="iev-rev-de" placeholder="Ex: Vente Stripe"></div>'
+    + '<div><lbl>Montant ($)</lbl><input id="iev-rev-am" type="number" step="0.01" style="width:90px"></div>'
     + '</div>'
     + '<div class="frow">'
-    + '<div><lbl>Statut</lbl><select id="ev-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>'
-    + '<div><lbl>Notes</lbl><input id="ev-rev-no" placeholder="Optionnel"></div>'
+    + '<div><lbl>Statut</lbl><select id="iev-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>'
+    + '<div style="flex:3"><lbl>Notes</lbl><input id="iev-rev-no" placeholder="Optionnel"></div>'
     + '</div>'
-    + '<button class="btn bg2" style="margin-top:8px" onclick="addRevenueInline(\''+eid+'\')">+ Ajouter revenu</button>'
+    + '<button class="btn bg2" style="margin-top:6px" onclick="addRevInline(\''+eid+'\')" >+ Ajouter revenu</button>'
     + '</div>'
     + '<table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table>'
     + '</div>'
@@ -1132,56 +1109,6 @@ function openEvent(eid) {
   document.querySelectorAll('.nb').forEach(function(el) { el.classList.remove('on'); });
   var det = _g('pg-ev-detail');
   if (det) { det.innerHTML = html; det.classList.add('on'); }
-}
-
-
-function _fillInlineCatsAndPayers() {
-  // Categories from settings or fallback
-  var expSel = _g('ev-exp-ca'), revSel = _g('ev-rev-ca');
-  var expCats = (_settings.expCats && _settings.expCats.length) ? _settings.expCats : ['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre'];
-  var revCats = (_settings.revCats && _settings.revCats.length) ? _settings.revCats : ['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre'];
-  if (expSel) { expSel.innerHTML = expCats.map(function(c){return '<option>'+c+'</option>';}).join(''); }
-  if (revSel) { revSel.innerHTML = revCats.map(function(c){return '<option>'+c+'</option>';}).join(''); }
-  var paySel = _g('ev-exp-pb');
-  if (paySel) {
-    var payers = (_settings.payers && _settings.payers.length) ? _settings.payers : ['LP Cote','LP Viens','Vincent','Fonds commun'];
-    paySel.innerHTML = payers.map(function(p){return '<option>'+p+'</option>';}).join('');
-  }
-}
-
-function addExpenseInline(eid) {
-  if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
-  var amt = _g('ev-exp-am').value;
-  if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
-  var cat = _g('ev-exp-ca').value, desc = _g('ev-exp-de').value;
-  var paidBy = _g('ev-exp-pb').value, st = _g('ev-exp-st').value, rf = _g('ev-exp-rf').value, no = _g('ev-exp-no').value;
-  db.collection('expenses').add({
-    eventId:eid, cat:cat, desc:desc, amount:Number(amt),
-    paidBy:paidBy, status:st, refund:rf, notes:no,
-    addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function() {
-    ['ev-exp-de','ev-exp-am','ev-exp-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
-    toast('Depense ajoutee!','success');
-    logHistory('Depense ajoutee', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Paye par': paidBy, 'Statut': st, 'Remboursable': rf });
-    openEvent(eid);
-  }).catch(function(e){ alert('Erreur: '+e.message); });
-}
-
-function addRevenueInline(eid) {
-  if (_role === 'viewer') { toast('Permission refusee — contactez un admin','error'); return; }
-  var amt = _g('ev-rev-am').value;
-  if (!amt || Number(amt) <= 0) { alert('Entrez un montant valide'); return; }
-  var cat = _g('ev-rev-ca').value, desc = _g('ev-rev-de').value;
-  var st = _g('ev-rev-st').value, no = _g('ev-rev-no').value;
-  db.collection('revenues').add({
-    eventId:eid, cat:cat, desc:desc, amount:Number(amt),
-    status:st, notes:no, addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-  }).then(function() {
-    ['ev-rev-de','ev-rev-am','ev-rev-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
-    toast('Revenu ajoute!','success');
-    logHistory('Revenu ajoute', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Statut': st });
-    openEvent(eid);
-  }).catch(function(e){ alert('Erreur: '+e.message); });
 }
 
 // ============================================================
@@ -1378,6 +1305,254 @@ function _refresh() {
 }
 
 window.onload = function() { _initShareholderForm(); };
+
+// ============================================================
+// SETTINGS (categories / payers)
+// ============================================================
+var _settings = {
+  expCats:['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre'],
+  revCats:['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre'],
+  payers:['LP Cote','LP Viens','Vincent','Fonds commun']
+};
+
+function _getCatOptions(type) {
+  var cats = (type==='exp') ? (_settings.expCats||[]) : (_settings.revCats||[]);
+  return cats.map(function(c){return '<option>'+c+'</option>';}).join('');
+}
+function _getPayerOptions() {
+  return (_settings.payers||[]).map(function(p){return '<option>'+p+'</option>';}).join('');
+}
+function _prefillSettingsForm() {
+  var e1=_g('cfg-exp-cats'),e2=_g('cfg-rev-cats'),e3=_g('cfg-payers');
+  if(e1) e1.value=(_settings.expCats||[]).join('\n');
+  if(e2) e2.value=(_settings.revCats||[]).join('\n');
+  if(e3) e3.value=(_settings.payers||[]).join('\n');
+}
+function saveSettings() {
+  if(_role!=='admin'){toast('Admin seulement','error');return;}
+  var exp=(_g('cfg-exp-cats').value||'').split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
+  var rev=(_g('cfg-rev-cats').value||'').split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
+  var pay=(_g('cfg-payers').value||'').split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
+  db.collection('settings').doc('app').set({expCats:exp,revCats:rev,payers:pay},{merge:true})
+    .then(function(){toast('Parametres sauvegardes','success');})
+    .catch(function(e){alert('Erreur: '+e.message);});
+}
+
+// ============================================================
+// INLINE EXPENSE / REVENUE (inside event page)
+// ============================================================
+function addExpInline(eid) {
+  if(_role==='viewer'){toast('Permission refusee','error');return;}
+  var amt=Number((_g('iev-exp-am')||{}).value||0);
+  if(!amt||amt<=0){alert('Montant invalide');return;}
+  var cat=(_g('iev-exp-ca')||{}).value||'', desc=(_g('iev-exp-de')||{}).value||'';
+  var pb=(_g('iev-exp-pb')||{}).value||'', st=(_g('iev-exp-st')||{}).value||'paye';
+  var rf=(_g('iev-exp-rf')||{}).value||'non', no=(_g('iev-exp-no')||{}).value||'';
+  db.collection('expenses').add({eventId:eid,cat:cat,desc:desc,amount:amt,paidBy:pb,status:st,refund:rf,notes:no,addedBy:_user.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(function(){
+      ['iev-exp-de','iev-exp-am','iev-exp-no'].forEach(function(id){var el=_g(id);if(el)el.value='';});
+      toast('Depense ajoutee!','success');
+      logHistory('Depense ajoutee',eid,cat+' — '+desc,amt,{Categorie:cat,Description:desc,Montant:_m(amt),'Paye par':pb,Statut:st,Remboursable:rf});
+    }).catch(function(e){alert('Erreur: '+e.message);});
+}
+function addRevInline(eid) {
+  if(_role==='viewer'){toast('Permission refusee','error');return;}
+  var amt=Number((_g('iev-rev-am')||{}).value||0);
+  if(!amt||amt<=0){alert('Montant invalide');return;}
+  var cat=(_g('iev-rev-ca')||{}).value||'', desc=(_g('iev-rev-de')||{}).value||'';
+  var st=(_g('iev-rev-st')||{}).value||'recu', no=(_g('iev-rev-no')||{}).value||'';
+  db.collection('revenues').add({eventId:eid,cat:cat,desc:desc,amount:amt,status:st,notes:no,addedBy:_user.email,createdAt:firebase.firestore.FieldValue.serverTimestamp()})
+    .then(function(){
+      ['iev-rev-de','iev-rev-am','iev-rev-no'].forEach(function(id){var el=_g(id);if(el)el.value='';});
+      toast('Revenu ajoute!','success');
+      logHistory('Revenu ajoute',eid,cat+' — '+desc,amt,{Categorie:cat,Description:desc,Montant:_m(amt),Statut:st});
+    }).catch(function(e){alert('Erreur: '+e.message);});
+}
+
+// ============================================================
+// EDIT EVENT INFO MODAL
+// ============================================================
+var _editInfoEid=null;
+function openEvInfoModal(eid) {
+  if(_role!=='admin'){toast('Admin seulement','error');return;}
+  _editInfoEid=eid;
+  var ev=_data.events.find(function(e){return e.id===eid;});
+  if(!ev)return;
+  _g('ev-edit-name').value=ev.name||'';
+  _g('ev-edit-date').value=ev.date||'';
+  _g('ev-edit-lieu').value=ev.lieu||'';
+  _g('ev-edit-prix').value=ev.prix||0;
+  _g('ev-edit-obj').value=ev.objectif||'';
+  _g('ev-info-modal').style.display='flex';
+}
+function closeEvInfoModal(){_g('ev-info-modal').style.display='none';_editInfoEid=null;}
+function saveEvInfo() {
+  if(!_editInfoEid)return;
+  var nm=_g('ev-edit-name').value, dt=_g('ev-edit-date').value, li=_g('ev-edit-lieu').value;
+  var pr=Number(_g('ev-edit-prix').value)||0, obj=Number(_g('ev-edit-obj').value)||0;
+  db.collection('events').doc(_editInfoEid).update({name:nm,date:dt,lieu:li,prix:pr,objectif:obj})
+    .then(function(){
+      toast('Evenement mis a jour','success');
+      logHistory('Evenement modifie',_editInfoEid,nm,0,{Nom:nm,Date:dt,Lieu:li,'Prix billet':_m(pr),'Objectif billets':obj});
+      closeEvInfoModal();
+    }).catch(function(e){alert('Erreur: '+e.message);});
+}
+
+// ============================================================
+// EDIT EXPENSE / REVENUE MODAL
+// ============================================================
+var _editEr={type:null,id:null,eid:null};
+function openEditExpense(eid,id) {
+  if(_role!=='admin'&&_role!=='manager'){toast('Permission refusee','error');return;}
+  _editEr={type:'expense',id:id,eid:eid};
+  var e=_data.expenses.find(function(x){return x.id===id;});if(!e)return;
+  var payers=_settings.payers||['LP Cote','LP Viens','Vincent','Fonds commun'];
+  _g('er-paidBy').innerHTML=payers.map(function(p){return '<option>'+p+'</option>';}).join('');
+  _g('er-paidBy').value=e.paidBy||payers[0];
+  _g('er-status').innerHTML='<option value="paye">Paye</option><option value="en attente">En attente</option>';
+  _g('er-status').value=e.status||'paye';
+  _g('er-refund').value=e.refund||'non';
+  _g('er-notes').value=e.notes||'';
+  _g('er-paidby-row').style.display='';
+  _g('er-refund-row').style.display='';
+  _g('er-modal-title').textContent='Modifier depense';
+  _g('edit-er-modal').style.display='flex';
+}
+function openEditRevenue(eid,id) {
+  if(_role!=='admin'&&_role!=='manager'){toast('Permission refusee','error');return;}
+  _editEr={type:'revenue',id:id,eid:eid};
+  var r=_data.revenues.find(function(x){return x.id===id;});if(!r)return;
+  _g('er-paidBy').innerHTML='<option value="na">N/A</option>';
+  _g('er-status').innerHTML='<option value="recu">Recu</option><option value="en attente">En attente</option>';
+  _g('er-status').value=r.status||'recu';
+  _g('er-notes').value=r.notes||'';
+  _g('er-paidby-row').style.display='none';
+  _g('er-refund-row').style.display='none';
+  _g('er-modal-title').textContent='Modifier revenu';
+  _g('edit-er-modal').style.display='flex';
+}
+function closeEditErModal(){_g('edit-er-modal').style.display='none';_editEr={type:null,id:null,eid:null};}
+function saveEditEr() {
+  if(!_editEr.type||!_editEr.id)return;
+  var notes=_g('er-notes').value;
+  if(_editEr.type==='expense'){
+    var pb=_g('er-paidBy').value, st=_g('er-status').value, rf=_g('er-refund').value;
+    db.collection('expenses').doc(_editEr.id).update({paidBy:pb,status:st,refund:rf,notes:notes})
+      .then(function(){toast('Depense mise a jour','success');closeEditErModal();})
+      .catch(function(e){alert('Erreur: '+e.message);});
+  } else {
+    var st2=_g('er-status').value;
+    db.collection('revenues').doc(_editEr.id).update({status:st2,notes:notes})
+      .then(function(){toast('Revenu mis a jour','success');closeEditErModal();})
+      .catch(function(e){alert('Erreur: '+e.message);});
+  }
+}
+
+// ============================================================
+// NOTES CHECKLIST
+// ============================================================
+var _notesEid=null, _noteItems=[];
+function openNotesModal(eid) {
+  _notesEid=eid;
+  var ev=_data.events.find(function(e){return e.id===eid;});if(!ev)return;
+  _noteItems=Array.isArray(ev.notes)?ev.notes.map(function(n){return{text:n.text,done:!!n.done};}):
+             (ev.notes?[{text:String(ev.notes),done:false}]:[]);
+  _renderNotesList();
+  _g('notes-modal').style.display='flex';
+}
+function closeNotesModal(){_g('notes-modal').style.display='none';_notesEid=null;}
+function _renderNotesList(){
+  var c=_g('notes-modal-list');if(!c)return;
+  if(!_noteItems.length){c.innerHTML='<div style="color:var(--muted);font-size:.82rem">Aucune note. Ajoutez-en ci-dessous.</div>';return;}
+  c.innerHTML=_noteItems.map(function(n,i){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">'
+      +'<input type="checkbox"'+(n.done?' checked':'')
+      +' onchange="_noteItems['+i+'].done=this.checked" style="width:16px;height:16px;cursor:pointer">'
+      +'<input value="'+n.text.replace(/"/g,'&quot;')+'" style="flex:1;margin-bottom:0" oninput="_noteItems['+i+'].text=this.value">'
+      +'<button class="btn br2" style="padding:2px 8px;font-size:.7rem" onclick="_noteItems.splice('+i+',1);_renderNotesList()">&#x2715;</button>'
+      +'</div>';
+  }).join('');
+}
+function addNoteItem(){
+  var inp=_g('notes-new-item');if(!inp)return;
+  var txt=inp.value.trim();if(!txt)return;
+  _noteItems.push({text:txt,done:false});inp.value='';_renderNotesList();
+}
+function saveNotes(){
+  if(!_notesEid)return;
+  db.collection('events').doc(_notesEid).update({notes:_noteItems})
+    .then(function(){toast('Checklist sauvegardee','success');closeNotesModal();})
+    .catch(function(e){alert('Erreur: '+e.message);});
+}
+function _toggleNote(eid,idx){
+  var ev=_data.events.find(function(e){return e.id===eid;});if(!ev)return;
+  var notes=Array.isArray(ev.notes)?ev.notes.slice():[];
+  if(!notes[idx])return;
+  notes[idx]=Object.assign({},notes[idx],{done:!notes[idx].done});
+  db.collection('events').doc(eid).update({notes:notes}).catch(function(){});
+}
+
+// ============================================================
+// FONDS COMMUN PAGE
+// ============================================================
+function _rFc() {
+  var totalAccum=0, totalSpent=0, moves=[];
+  // Accumulated from splits
+  _data.events.forEach(function(ev){
+    var sp=_split(ev.id);
+    if(sp.fonds>0){
+      totalAccum+=sp.fonds;
+      moves.push({type:'credit',label:'Partage — '+ev.name,amount:sp.fonds,date:ev.date||'',evName:ev.name});
+    }
+  });
+  // Spent = expenses where paidBy === 'Fonds commun'
+  _data.expenses.forEach(function(exp){
+    if((exp.paidBy||'').toLowerCase().indexOf('fonds commun')>-1){
+      totalSpent+=exp.amount||0;
+      var evName=_evName(exp.eventId);
+      moves.push({type:'debit',label:(exp.desc||exp.cat||'Depense'),amount:exp.amount||0,date:exp.createdAt?new Date(exp.createdAt.toDate()).toLocaleDateString('fr-CA'):'',evName:evName});
+    }
+  });
+  var solde=totalAccum-totalSpent;
+  var fcStats=_g('fc-stats');
+  if(fcStats){
+    fcStats.innerHTML=[
+      ['Accumule (partages)',_m(totalAccum),'y'],
+      ['Depenses FC',_m(totalSpent),'r'],
+      ['Solde actuel',_m(solde),solde>=0?'g':'r']
+    ].map(function(s){return '<div class="stat"><div class="sl">'+s[0]+'</div><div class="sv '+s[2]+'">'+s[1]+'</div></div>';}).join('');
+  }
+  // Sort moves by date desc
+  moves.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  var running=solde;
+  var tb=_g('fc-tb');
+  if(!tb)return;
+  if(!moves.length){tb.innerHTML='<tr><td colspan="6" class="empty">Aucun mouvement</td></tr>';return;}
+  // Build rows with running balance
+  var rows=[],bal=totalAccum;
+  // recalculate running from top
+  var sorted=moves.slice();
+  var balArr=[];
+  var runBal=0;
+  sorted.slice().reverse().forEach(function(m){
+    if(m.type==='credit') runBal+=m.amount; else runBal-=m.amount;
+    balArr.unshift(runBal);
+  });
+  tb.innerHTML=sorted.map(function(m,i){
+    var tc=m.type==='credit'?'jg':'jr',tl=m.type==='credit'?'Credit':'Debit';
+    var amtCls=m.type==='credit'?'g':'r';
+    var sign=m.type==='credit'?'+':'-';
+    return '<tr>'
+      +'<td>'+(m.date||'-')+'</td>'
+      +'<td><span class="bj '+tc+'">'+tl+'</span></td>'
+      +'<td>'+m.evName+'</td>'
+      +'<td>'+m.label+'</td>'
+      +'<td class="'+amtCls+'">'+sign+_m(m.amount)+'</td>'
+      +'<td class="'+(balArr[i]>=0?'g':'r')+'">'+_m(balArr[i])+'</td>'
+      +'</tr>';
+  }).join('');
+}
+
 </script>
 </body>
 </html>
