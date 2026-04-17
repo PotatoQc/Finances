@@ -633,7 +633,16 @@ function openEvent(eid) {
       + '<div class="prog-bar-bg"><div class="prog-bar ' + cls + '" style="width:' + pct + '%"></div></div></div>';
   }
 
-  var notesHTML = ev.notes ? '<div class="notes-card"><div class="ct">Notes</div><div style="font-size:.84rem;line-height:1.6">' + ev.notes + '</div></div>' : '';
+  var _evNotes = Array.isArray(ev.notes) ? ev.notes : (ev.notes ? [{text:String(ev.notes),done:false}] : []);
+  var _editNoteBtn = (_role==='admin'||_role==='manager') ? '<button class="btn bo" style="padding:3px 9px;font-size:.7rem;margin-left:8px" onclick="openNotesModal(\''+eid+'\')">&#9998; Modifier</button>' : '';
+  var _checkItems = _evNotes.map(function(n,i){
+    var ds = n.done ? 'text-decoration:line-through;color:var(--muted)' : '';
+    var ic = n.done ? '&#9745;' : '&#9744;';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)">'
+      +'<span style="font-size:1.1rem;cursor:pointer;user-select:none" onclick="_toggleNote(\''+eid+'\','+i+')">'+ic+'</span>'
+      +'<span style="'+ds+'">'+n.text+'</span></div>';
+  }).join('');
+  var notesHTML = '<div class="notes-card"><div style="display:flex;align-items:center;margin-bottom:8px"><div class="ct" style="margin:0">Notes &amp; Checklist</div>'+_editNoteBtn+'</div>'+(_checkItems||'<div style="color:var(--muted);font-size:.82rem">Aucune note — cliquez Modifier pour en ajouter.</div>')+'</div>';
 
   var colors = ['y','p','g','b','w'];
   var splitCards = [];
@@ -649,14 +658,16 @@ function openEvent(eid) {
 
   var expRows = exps.length ? exps.map(function(e) {
     var bc = e.status=='paye'?'jg':'jy', sl = e.status=='paye'?'Paye':'En attente';
-    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem" onclick="delExpense(\''+e.id+'\',\''+eid+'\')">✕</button>' : '';
-    return '<tr><td><span class="bj jw">'+e.cat+'</span></td><td>'+(e.desc||'-')+'</td><td class="r">'+_m(e.amount)+'</td><td>'+e.paidBy+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(e.refund||'-')+'</td><td>'+(e.notes||'-')+'</td><td>'+db2+'</td></tr>';
+    var eBtn = (_role==='admin'||_role==='manager') ? '<button class="btn bo" style="padding:2px 6px;font-size:.65rem;margin-right:3px" onclick="openEditExpense(\''+eid+'\',\''+e.id+'\')" title="Modifier">&#9998;</button>' : '';
+    var dBtn = canDel ? '<button class="btn br2" style="padding:2px 6px;font-size:.65rem" onclick="delExpense(\''+e.id+'\',\''+eid+'\',\''+encodeURIComponent(e.desc||e.cat||'')+'\','+e.amount+')">&#x2715;</button>' : '';
+    return '<tr><td><span class="bj jw">'+e.cat+'</span></td><td>'+(e.desc||'-')+'</td><td class="r">'+_m(e.amount)+'</td><td>'+e.paidBy+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(e.refund||'-')+'</td><td>'+(e.notes||'-')+'</td><td style="white-space:nowrap">'+eBtn+dBtn+'</td></tr>';
   }).join('') : '<tr><td colspan="8" class="empty">Aucune depense</td></tr>';
 
   var revRows = revs.length ? revs.map(function(r) {
     var bc = r.status=='recu'?'jg':'jy', sl = r.status=='recu'?'Recu':'En attente';
-    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem" onclick="delRevenue(\''+r.id+'\',\''+eid+'\')">✕</button>' : '';
-    return '<tr><td><span class="bj jg">'+r.cat+'</span></td><td>'+(r.desc||'-')+'</td><td class="g">'+_m(r.amount)+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(r.notes||'-')+'</td><td>'+db2+'</td></tr>';
+    var eBtn = (_role==='admin'||_role==='manager') ? '<button class="btn bo" style="padding:2px 6px;font-size:.65rem;margin-right:3px" onclick="openEditRevenue(\''+eid+'\',\''+r.id+'\')" title="Modifier">&#9998;</button>' : '';
+    var dBtn = canDel ? '<button class="btn br2" style="padding:2px 6px;font-size:.65rem" onclick="delRevenue(\''+r.id+'\',\''+eid+'\',\''+encodeURIComponent(r.desc||r.cat||'')+'\','+r.amount+')">&#x2715;</button>' : '';
+    return '<tr><td><span class="bj jg">'+r.cat+'</span></td><td>'+(r.desc||'-')+'</td><td class="g">'+_m(r.amount)+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(r.notes||'-')+'</td><td style="white-space:nowrap">'+eBtn+dBtn+'</td></tr>';
   }).join('') : '<tr><td colspan="6" class="empty">Aucun revenu</td></tr>';
 
   var delBtn = canDel ? '<button class="btn br2" style="margin-left:auto" onclick="delEvent(\''+eid+'\')">Supprimer</button>' : '';
@@ -666,7 +677,7 @@ function openEvent(eid) {
     + '<div class="ev-detail-header"><div>'
     + '<div class="ev-detail-title">'+ev.name+'</div>'
     + '<div class="ev-detail-sub">'+(ev.date||'')+(ev.lieu?' &nbsp;·&nbsp; '+ev.lieu:'')+'</div>'
-    + progHTML + '</div>' + delBtn + '</div>'
+    + progHTML + '</div><div style="display:flex;gap:6px">'+editEvBtn+delBtn+'</div></div>'
     + '<div class="grid">'
     + '<div class="stat"><div class="sl">Revenus</div><div class="sv g">'+_m(sp.rev)+'</div></div>'
     + '<div class="stat"><div class="sl">Depenses</div><div class="sv r">'+_m(sp.dep)+'</div></div>'
@@ -681,35 +692,27 @@ function openEvent(eid) {
     + '<button id="tb-rev2" class="tab" onclick="showTab(\'rev2\',\'ev-tabs\')">Revenus ('+revs.length+')</button>'
     + '</div>'
     + '<div id="tc-dep" class="tab-content on">'
-    + '<div class="inline-form">'
-    + '<div class="frow">'
-    + '<div><lbl>Categorie</lbl><select id="iev-exp-ca">' + _buildOpts(_settings.expCats, ['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre']) + '</select></div>'
-    + '<div style="flex:2"><lbl>Description</lbl><input id="iev-exp-de" placeholder="Ex: Location salle"></div>'
-    + '<div><lbl>Montant ($)</lbl><input id="iev-exp-am" type="number" step="0.01" style="width:100px"></div>'
-    + '</div>'
-    + '<div class="frow">'
-    + '<div><lbl>Paye par</lbl><select id="iev-exp-pb">' + _buildOpts(_settings.payers, ['LP Cote','LP Viens','Vincent','Fonds commun']) + '</select></div>'
-    + '<div><lbl>Statut</lbl><select id="iev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'
-    + '<div><lbl>Remb.</lbl><select id="iev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'
-    + '<div style="flex:2"><lbl>Notes</lbl><input id="iev-exp-no" placeholder="Optionnel"></div>'
-    + '</div>'
-    + (_role!=='viewer' ? '<button class="btn bw" style="margin-top:6px" onclick="addExpInline(\''+eid+'\')" >+ Ajouter depense</button>' : '')
-    + '</div>'
+    + (_role!=='viewer' ? '<div class="inline-form"><div class="frow">'
+      + '<div><lbl>Categorie</lbl><select id="iev-exp-ca">'+_buildOpts(_settings.expCats,['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre'])+'</select></div>'
+      + '<div style="flex:2"><lbl>Description</lbl><input id="iev-exp-de" placeholder="Ex: Location salle"></div>'
+      + '<div><lbl>Montant ($)</lbl><input id="iev-exp-am" type="number" step="0.01" style="width:100px"></div>'
+      + '</div><div class="frow">'
+      + '<div><lbl>Paye par</lbl><select id="iev-exp-pb">'+_buildOpts(_settings.payers,['LP Cote','LP Viens','Vincent','Fonds commun'])+'</select></div>'
+      + '<div><lbl>Statut</lbl><select id="iev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'
+      + '<div><lbl>Remb.</lbl><select id="iev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'
+      + '<div style="flex:2"><lbl>Notes</lbl><input id="iev-exp-no" placeholder="Optionnel"></div>'
+      + '</div><button class="btn bw" style="margin-top:6px" onclick="addExpInline(\''+eid+'\')" >+ Ajouter depense</button></div>' : '')
     + '<div style="overflow-x:auto"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table></div>'
     + '</div>'
     + '<div id="tc-rev2" class="tab-content">'
-    + '<div class="inline-form">'
-    + '<div class="frow">'
-    + '<div><lbl>Categorie</lbl><select id="iev-rev-ca">' + _buildOpts(_settings.revCats, ['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre']) + '</select></div>'
-    + '<div style="flex:2"><lbl>Description</lbl><input id="iev-rev-de" placeholder="Ex: Vente Stripe"></div>'
-    + '<div><lbl>Montant ($)</lbl><input id="iev-rev-am" type="number" step="0.01" style="width:100px"></div>'
-    + '</div>'
-    + '<div class="frow">'
-    + '<div><lbl>Statut</lbl><select id="iev-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>'
-    + '<div style="flex:3"><lbl>Notes</lbl><input id="iev-rev-no" placeholder="Optionnel"></div>'
-    + '</div>'
-    + (_role!=='viewer' ? '<button class="btn bg2" style="margin-top:6px" onclick="addRevInline(\''+eid+'\')" >+ Ajouter revenu</button>' : '')
-    + '</div>'
+    + (_role!=='viewer' ? '<div class="inline-form"><div class="frow">'
+      + '<div><lbl>Categorie</lbl><select id="iev-rev-ca">'+_buildOpts(_settings.revCats,['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre'])+'</select></div>'
+      + '<div style="flex:2"><lbl>Description</lbl><input id="iev-rev-de" placeholder="Ex: Vente Stripe"></div>'
+      + '<div><lbl>Montant ($)</lbl><input id="iev-rev-am" type="number" step="0.01" style="width:100px"></div>'
+      + '</div><div class="frow">'
+      + '<div><lbl>Statut</lbl><select id="iev-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>'
+      + '<div style="flex:3"><lbl>Notes</lbl><input id="iev-rev-no" placeholder="Optionnel"></div>'
+      + '</div><button class="btn bg2" style="margin-top:6px" onclick="addRevInline(\''+eid+'\')" >+ Ajouter revenu</button></div>' : '')
     + '<div style="overflow-x:auto"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table></div>'
     + '</div>'
     + '</div>';
@@ -915,7 +918,10 @@ function _refresh() {
 
 window.onload = function() { _initShareholderForm(); };
 
-// ── Settings defaults ──────────────────────────────────────────────────────
+
+// ============================================================
+// SETTINGS
+// ============================================================
 var _settings = {
   expCats: ['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Fonds commun','Autre'],
   revCats: ['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre'],
@@ -927,62 +933,219 @@ function _buildOpts(arr, fallback) {
   return list.map(function(c){ return '<option>'+c+'</option>'; }).join('');
 }
 
-// ── Inline expense ──────────────────────────────────────────────────────────
+function _initSettingsListener() {
+  db.collection('settings').doc('app').onSnapshot(function(snap) {
+    if (!snap.exists) return;
+    var d = snap.data();
+    if (d.expCats && d.expCats.length) _settings.expCats = d.expCats;
+    if (d.revCats && d.revCats.length) _settings.revCats = d.revCats;
+    if (d.payers  && d.payers.length)  _settings.payers  = d.payers;
+  });
+}
+
+// ============================================================
+// INLINE EXPENSE ADD
+// ============================================================
 function addExpInline(eid) {
-  if (_role === 'viewer') { toast('Permission refusee — contactez un admin', 'error'); return; }
-  var amtEl = _g('iev-exp-am'); if (!amtEl) return;
-  var amt = Number(amtEl.value);
+  if (_role === 'viewer') { toast('Permission refusee', 'error'); return; }
+  var amt = Number((_g('iev-exp-am')||{}).value||0);
   if (!amt || amt <= 0) { toast('Entrez un montant valide', 'error'); return; }
-  var cat  = (_g('iev-exp-ca')  || {}).value || '';
-  var desc = (_g('iev-exp-de')  || {}).value || '';
-  var pb   = (_g('iev-exp-pb')  || {}).value || '';
-  var st   = (_g('iev-exp-st')  || {}).value || 'paye';
-  var rf   = (_g('iev-exp-rf')  || {}).value || 'non';
-  var no   = (_g('iev-exp-no')  || {}).value || '';
+  var cat  = (_g('iev-exp-ca')||{}).value||'';
+  var desc = (_g('iev-exp-de')||{}).value||'';
+  var pb   = (_g('iev-exp-pb')||{}).value||'';
+  var st   = (_g('iev-exp-st')||{}).value||'paye';
+  var rf   = (_g('iev-exp-rf')||{}).value||'non';
+  var no   = (_g('iev-exp-no')||{}).value||'';
   db.collection('expenses').add({
-    eventId: eid, cat: cat, desc: desc, amount: amt,
-    paidBy: pb, status: st, refund: rf, notes: no,
-    addedBy: _user.email, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    eventId:eid, cat:cat, desc:desc, amount:amt,
+    paidBy:pb, status:st, refund:rf, notes:no,
+    addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function() {
     ['iev-exp-de','iev-exp-am','iev-exp-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
     toast('Depense ajoutee!', 'success');
-    logHistory('Depense ajoutee', eid, cat+' — '+desc, amt, {
-      Categorie:cat, Description:desc, Montant:_m(amt), 'Paye par':pb, Statut:st, Remboursable:rf
-    });
+    logHistory('Depense ajoutee', eid, cat+' — '+desc, amt, {Categorie:cat, Description:desc, Montant:_m(amt), 'Paye par':pb, Statut:st, Remboursable:rf});
   }).catch(function(e){ toast('Erreur: '+e.message, 'error'); });
 }
 
-// ── Inline revenue ──────────────────────────────────────────────────────────
+// ============================================================
+// INLINE REVENUE ADD
+// ============================================================
 function addRevInline(eid) {
-  if (_role === 'viewer') { toast('Permission refusee — contactez un admin', 'error'); return; }
-  var amtEl = _g('iev-rev-am'); if (!amtEl) return;
-  var amt = Number(amtEl.value);
+  if (_role === 'viewer') { toast('Permission refusee', 'error'); return; }
+  var amt = Number((_g('iev-rev-am')||{}).value||0);
   if (!amt || amt <= 0) { toast('Entrez un montant valide', 'error'); return; }
-  var cat  = (_g('iev-rev-ca') || {}).value || '';
-  var desc = (_g('iev-rev-de') || {}).value || '';
-  var st   = (_g('iev-rev-st') || {}).value || 'recu';
-  var no   = (_g('iev-rev-no') || {}).value || '';
+  var cat  = (_g('iev-rev-ca')||{}).value||'';
+  var desc = (_g('iev-rev-de')||{}).value||'';
+  var st   = (_g('iev-rev-st')||{}).value||'recu';
+  var no   = (_g('iev-rev-no')||{}).value||'';
   db.collection('revenues').add({
-    eventId: eid, cat: cat, desc: desc, amount: amt,
-    status: st, notes: no, addedBy: _user.email,
-    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    eventId:eid, cat:cat, desc:desc, amount:amt,
+    status:st, notes:no, addedBy:_user.email,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function() {
     ['iev-rev-de','iev-rev-am','iev-rev-no'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
     toast('Revenu ajoute!', 'success');
-    logHistory('Revenu ajoute', eid, cat+' — '+desc, amt, {
-      Categorie:cat, Description:desc, Montant:_m(amt), Statut:st
-    });
+    logHistory('Revenu ajoute', eid, cat+' — '+desc, amt, {Categorie:cat, Description:desc, Montant:_m(amt), Statut:st});
   }).catch(function(e){ toast('Erreur: '+e.message, 'error'); });
 }
 
-// ── Settings listener (load from Firestore) ─────────────────────────────────
-function _initSettingsListener() {
-  db.collection('settings').doc('app').onSnapshot(function(snap) {
-    if (snap.exists) {
-      var d = snap.data();
-      if (d.expCats && d.expCats.length) _settings.expCats = d.expCats;
-      if (d.revCats && d.revCats.length) _settings.revCats = d.revCats;
-      if (d.payers  && d.payers.length)  _settings.payers  = d.payers;
+// ============================================================
+// EDIT EVENT INFO
+// ============================================================
+var _editInfoEid = null;
+function openEvInfoModal(eid) {
+  if (_role !== 'admin') { toast('Admin seulement', 'error'); return; }
+  _editInfoEid = eid;
+  var ev = _data.events.find(function(e){ return e.id===eid; });
+  if (!ev) return;
+  _g('ev-edit-name').value  = ev.name||'';
+  _g('ev-edit-date').value  = ev.date||'';
+  _g('ev-edit-lieu').value  = ev.lieu||'';
+  _g('ev-edit-prix').value  = ev.prix||0;
+  _g('ev-edit-obj').value   = ev.objectif||'';
+  _g('ev-info-modal').style.display = 'flex';
+}
+function closeEvInfoModal() { _g('ev-info-modal').style.display='none'; _editInfoEid=null; }
+function saveEvInfo() {
+  if (!_editInfoEid) return;
+  var nm=_g('ev-edit-name').value, dt=_g('ev-edit-date').value, li=_g('ev-edit-lieu').value;
+  var pr=Number(_g('ev-edit-prix').value)||0, obj=Number(_g('ev-edit-obj').value)||0;
+  db.collection('events').doc(_editInfoEid).update({name:nm,date:dt,lieu:li,prix:pr,objectif:obj})
+    .then(function(){
+      toast('Evenement mis a jour', 'success');
+      logHistory('Evenement modifie',_editInfoEid,nm,0,{Nom:nm,Date:dt,Lieu:li,'Prix billet':_m(pr),'Objectif billets':obj});
+      closeEvInfoModal();
+    }).catch(function(e){ toast('Erreur: '+e.message,'error'); });
+}
+
+// ============================================================
+// EDIT EXPENSE / REVENUE MODAL
+// ============================================================
+var _editEr = {type:null, id:null, eid:null};
+function openEditExpense(eid, id) {
+  if (_role==='viewer') { toast('Permission refusee','error'); return; }
+  _editEr = {type:'expense', id:id, eid:eid};
+  var e = _data.expenses.find(function(x){ return x.id===id; }); if (!e) return;
+  var payers = (_settings.payers&&_settings.payers.length) ? _settings.payers : ['LP Cote','LP Viens','Vincent','Fonds commun'];
+  _g('er-paidBy').innerHTML = payers.map(function(p){ return '<option>'+p+'</option>'; }).join('');
+  _g('er-paidBy').value     = e.paidBy||payers[0];
+  _g('er-status').innerHTML = '<option value="paye">Paye</option><option value="en attente">En attente</option>';
+  _g('er-status').value     = e.status||'paye';
+  _g('er-refund').value     = e.refund||'non';
+  _g('er-notes').value      = e.notes||'';
+  _g('er-paidby-row').style.display = '';
+  _g('er-refund-row').style.display = '';
+  _g('er-modal-title').textContent  = 'Modifier depense';
+  _g('edit-er-modal').style.display = 'flex';
+}
+function openEditRevenue(eid, id) {
+  if (_role==='viewer') { toast('Permission refusee','error'); return; }
+  _editEr = {type:'revenue', id:id, eid:eid};
+  var r = _data.revenues.find(function(x){ return x.id===id; }); if (!r) return;
+  _g('er-paidBy').innerHTML = '<option value="na">N/A</option>';
+  _g('er-status').innerHTML = '<option value="recu">Recu</option><option value="en attente">En attente</option>';
+  _g('er-status').value     = r.status||'recu';
+  _g('er-notes').value      = r.notes||'';
+  _g('er-paidby-row').style.display = 'none';
+  _g('er-refund-row').style.display = 'none';
+  _g('er-modal-title').textContent  = 'Modifier revenu';
+  _g('edit-er-modal').style.display = 'flex';
+}
+function closeEditErModal() { _g('edit-er-modal').style.display='none'; _editEr={type:null,id:null,eid:null}; }
+function saveEditEr() {
+  if (!_editEr.type||!_editEr.id) return;
+  var notes = _g('er-notes').value;
+  if (_editEr.type==='expense') {
+    var pb=_g('er-paidBy').value, st=_g('er-status').value, rf=_g('er-refund').value;
+    db.collection('expenses').doc(_editEr.id).update({paidBy:pb,status:st,refund:rf,notes:notes})
+      .then(function(){ toast('Depense mise a jour','success'); closeEditErModal(); })
+      .catch(function(e){ toast('Erreur: '+e.message,'error'); });
+  } else {
+    db.collection('revenues').doc(_editEr.id).update({status:_g('er-status').value,notes:notes})
+      .then(function(){ toast('Revenu mis a jour','success'); closeEditErModal(); })
+      .catch(function(e){ toast('Erreur: '+e.message,'error'); });
+  }
+}
+
+// ============================================================
+// NOTES CHECKLIST
+// ============================================================
+var _notesEid=null, _noteItems=[];
+function openNotesModal(eid) {
+  _notesEid = eid;
+  var ev = _data.events.find(function(e){ return e.id===eid; }); if (!ev) return;
+  _noteItems = Array.isArray(ev.notes)
+    ? ev.notes.map(function(n){ return {text:n.text||'',done:!!n.done}; })
+    : (ev.notes ? [{text:String(ev.notes),done:false}] : []);
+  _renderNotesList();
+  _g('notes-modal').style.display = 'flex';
+}
+function closeNotesModal() { _g('notes-modal').style.display='none'; _notesEid=null; }
+function _renderNotesList() {
+  var c = _g('notes-modal-list'); if (!c) return;
+  if (!_noteItems.length) { c.innerHTML='<div style="color:var(--muted);font-size:.82rem">Aucune note. Ajoutez-en ci-dessous.</div>'; return; }
+  c.innerHTML = _noteItems.map(function(n,i){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)">'
+      +'<input type="checkbox"'+(n.done?' checked':'')+' onchange="_noteItems['+i+'].done=this.checked" style="width:16px;height:16px;cursor:pointer">'
+      +'<input value="'+n.text.replace(/"/g,'&quot;')+'" style="flex:1;margin-bottom:0" oninput="_noteItems['+i+'].text=this.value">'
+      +'<button class="btn br2" style="padding:2px 8px;font-size:.7rem" onclick="_noteItems.splice('+i+',1);_renderNotesList()">&#x2715;</button>'
+      +'</div>';
+  }).join('');
+}
+function addNoteItem() {
+  var inp=_g('notes-new-item'); if (!inp) return;
+  var txt=inp.value.trim(); if (!txt) return;
+  _noteItems.push({text:txt,done:false}); inp.value=''; _renderNotesList();
+}
+function saveNotes() {
+  if (!_notesEid) return;
+  db.collection('events').doc(_notesEid).update({notes:_noteItems})
+    .then(function(){ toast('Checklist sauvegardee','success'); closeNotesModal(); })
+    .catch(function(e){ toast('Erreur: '+e.message,'error'); });
+}
+function _toggleNote(eid,idx) {
+  var ev=_data.events.find(function(e){ return e.id===eid; }); if (!ev) return;
+  var notes = Array.isArray(ev.notes) ? ev.notes.slice() : [];
+  if (!notes[idx]) return;
+  notes[idx] = {text:notes[idx].text, done:!notes[idx].done};
+  db.collection('events').doc(eid).update({notes:notes}).catch(function(){});
+}
+
+// ============================================================
+// FONDS COMMUN
+// ============================================================
+function _rFc() {
+  var totalAccum=0, totalSpent=0, moves=[];
+  _data.events.forEach(function(ev){
+    var sp=_split(ev.id);
+    if (sp.fonds>0) { totalAccum+=sp.fonds; moves.push({type:'credit',label:'Partage',evName:ev.name,amount:sp.fonds,date:ev.date||''}); }
+  });
+  _data.expenses.forEach(function(exp){
+    if ((exp.paidBy||'').toLowerCase().indexOf('fonds commun')>-1) {
+      totalSpent+=exp.amount||0;
+      var ev=_data.events.find(function(e){return e.id===exp.eventId;})||{};
+      moves.push({type:'debit',label:exp.desc||exp.cat||'Depense',evName:ev.name||'-',amount:exp.amount||0,date:exp.createdAt?new Date(exp.createdAt.toDate?exp.createdAt.toDate():exp.createdAt).toLocaleDateString('fr-CA'):''});
     }
   });
+  var solde=totalAccum-totalSpent;
+  var fcStats=_g('fc-stats');
+  if (fcStats) fcStats.innerHTML=[
+    ['Total accumule',_m(totalAccum),'y'],
+    ['Depenses FC',_m(totalSpent),'r'],
+    ['Solde actuel',_m(solde),solde>=0?'g':'r']
+  ].map(function(s){ return '<div class="stat"><div class="sl">'+s[0]+'</div><div class="sv '+s[2]+'">'+s[1]+'</div></div>'; }).join('');
+  moves.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var tb=_g('fc-tb'); if (!tb) return;
+  if (!moves.length) { tb.innerHTML='<tr><td colspan="6" class="empty">Aucun mouvement</td></tr>'; return; }
+  var running=0;
+  var withBal=moves.slice().reverse().map(function(m){
+    running += (m.type==='credit' ? m.amount : -m.amount);
+    return Object.assign({},m,{bal:running});
+  }).reverse();
+  tb.innerHTML=withBal.map(function(m){
+    var tc=m.type==='credit'?'jg':'jr', tl=m.type==='credit'?'Credit':'Debit';
+    var sign=m.type==='credit'?'+':'-';
+    return '<tr><td>'+(m.date||'-')+'</td><td><span class="bj '+tc+'">'+tl+'</span></td><td>'+m.evName+'</td><td>'+m.label+'</td><td class="'+(m.type==='credit'?'g':'r')+'">'+sign+_m(m.amount)+'</td><td class="'+(m.bal>=0?'g':'r')+'">'+_m(m.bal)+'</td></tr>';
+  }).join('');
 }
+

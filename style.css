@@ -100,13 +100,10 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .modal-row .rm:hover{background:var(--red);color:#000}
 .pct-total{font-size:.78rem;margin:8px 0 4px;font-weight:700}
 
-/* ── Inline forms in event detail ── */
-.inline-form {
-  background: rgba(15,23,42,.7);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 14px;
-}
-.inline-form .frow { margin-bottom: 6px; }
-.inline-form lbl { font-size: .72rem; }
+/* ── Inline forms inside event tabs ── */
+.inline-form{background:rgba(15,23,42,.7);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px}
+.inline-form .frow{margin-bottom:6px}
+.inline-form lbl{font-size:.72rem}
+/* ── Nav wrap on small screens ── */
+nav{flex-wrap:wrap;gap:4px}
+nav .nb{font-size:.8rem;padding:8px 12px}

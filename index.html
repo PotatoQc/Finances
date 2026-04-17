@@ -10,7 +10,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-
 <link rel="stylesheet" href="style.css">
 
 </head>
@@ -42,8 +41,9 @@
   <nav>
     <button id="nb-dash" class="nb on" onclick="showPage('dash')">Dashboard</button>
     <button id="nb-ev-list" class="nb" onclick="showPage('ev-list')">Evenements</button>
-    <button id="nb-add" class="nb" onclick="showPage('add')">Ajouter</button>
+    <button id="nb-add" class="nb" onclick="showPage('add')">Creer evenement</button>
     <button id="nb-graphs" class="nb" onclick="showPage('graphs')">Graphiques</button>
+    <button id="nb-fc" class="nb" onclick="showPage('fc');_rFc()">Fonds commun</button>
     <button id="nb-history" class="nb" onclick="showPage('history')">Historique</button>
     <button id="nb-users" class="nb admin-only" onclick="showPage('users')">Utilisateurs</button>
     <button id="nb-ex" class="nb" onclick="showPage('ex')">Exporter</button>
@@ -188,8 +188,77 @@
     <div id="ev-modal-content"></div>
   </div>
 </div>
+
+<div id="pg-fc" class="pg">
+  <div class="card">
+    <div class="ct">Solde du Fonds commun</div>
+    <div class="grid" id="fc-stats"></div>
+  </div>
+  <div class="card">
+    <div class="ct">Historique des mouvements</div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>Date</th><th>Type</th><th>Evenement</th><th>Description</th><th>Montant</th><th>Solde apres</th></tr></thead>
+      <tbody id="fc-tb"><tr><td colspan="6" class="empty">Aucun mouvement</td></tr></tbody>
+    </table></div>
+  </div>
 </div>
 
+<!-- MODAL: modifier evenement -->
+<div id="ev-info-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ct" style="margin:0">Modifier l&#39;evenement</div>
+      <button class="btn bo" onclick="closeEvInfoModal()">&#x2715; Fermer</button>
+    </div>
+    <div class="frow"><div style="flex:1"><lbl>Nom</lbl><input id="ev-edit-name" style="width:100%"></div></div>
+    <div class="frow">
+      <div><lbl>Date</lbl><input id="ev-edit-date" type="date"></div>
+      <div><lbl>Lieu</lbl><input id="ev-edit-lieu"></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Prix billet ($)</lbl><input id="ev-edit-prix" type="number" step="0.01"></div>
+      <div><lbl>Objectif billets</lbl><input id="ev-edit-obj" type="number" min="0"></div>
+    </div>
+    <button class="btn bw" style="margin-top:14px;width:100%" onclick="saveEvInfo()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- MODAL: modifier depense/revenu -->
+<div id="edit-er-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:550;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;width:100%;max-width:440px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ct" style="margin:0" id="er-modal-title">Modifier</div>
+      <button class="btn bo" onclick="closeEditErModal()">&#x2715; Fermer</button>
+    </div>
+    <div id="er-paidby-row" class="frow">
+      <div style="flex:1"><lbl>Paye par</lbl><select id="er-paidBy" style="width:100%"></select></div>
+    </div>
+    <div class="frow">
+      <div style="flex:1"><lbl>Statut</lbl><select id="er-status" style="width:100%"></select></div>
+      <div style="flex:1" id="er-refund-row"><lbl>Remboursable</lbl><select id="er-refund" style="width:100%"><option value="non">Non</option><option value="oui">Oui</option></select></div>
+    </div>
+    <div class="frow"><div style="flex:1"><lbl>Notes</lbl><textarea id="er-notes" rows="3" style="width:100%"></textarea></div></div>
+    <button class="btn bw" style="margin-top:12px;width:100%" onclick="saveEditEr()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- MODAL: checklist notes -->
+<div id="notes-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="ct" style="margin:0">Notes &amp; Checklist</div>
+      <button class="btn bo" onclick="closeNotesModal()">&#x2715; Fermer</button>
+    </div>
+    <div id="notes-modal-list" style="margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px">
+      <input id="notes-new-item" placeholder="Nouvelle note..." style="flex:1" onkeydown="if(event.key==='Enter')addNoteItem()">
+      <button class="btn bw" onclick="addNoteItem()">+ Ajouter</button>
+    </div>
+    <button class="btn bg2" style="margin-top:12px;width:100%" onclick="saveNotes()">Enregistrer la checklist</button>
+  </div>
+</div>
+
+</div>
 <script src="script.js"></script>
 
 </body>
