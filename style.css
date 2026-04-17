@@ -7,9 +7,9 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:0 20
 .logo img{width:34px;height:34px;object-fit:contain;border-radius:5px}
 .bn{font-size:.88rem;font-weight:800;letter-spacing:.14em}
 .bs{font-size:.58rem;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
-nav{display:flex;gap:0;margin-left:auto;flex-wrap:wrap;align-items:center}
-.nb{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);padding:6px 12px;cursor:pointer;font-size:.76rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase}
-.nb:hover{color:var(--text)}.nb.on{color:var(--text);border-bottom-color:var(--text)}
+
+
+.nb:hover{color:var(--text)}
 .user-info{font-size:.72rem;color:var(--muted);padding:4px 10px;border-left:1px solid var(--border);margin-left:6px}
 .wrap{max-width:1200px;margin:0 auto;padding:22px 14px}
 .pg{display:none}.pg.on{display:block}
@@ -92,7 +92,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-txt{font-size:.78rem;color:var(--muted);letter-spacing:.1em}
 .chart-wrap{position:relative;width:100%;overflow-x:auto;min-height:200px}
-@media(max-width:600px){header{height:auto;padding:10px 14px}nav{margin-left:0;width:100%}.nb{font-size:.7rem;padding:5px 8px}.user-info{display:none}}
+@media(max-width:600px){header{height:auto;padding:10px 14px}.user-info{display:none}}
 
 .modal-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .modal-row input,.modal-row select{margin-bottom:0;flex:1;min-width:80px}
@@ -105,5 +105,34 @@ tr:hover td{background:rgba(255,255,255,.02)}
 .inline-form .frow{margin-bottom:6px}
 .inline-form lbl{font-size:.72rem}
 /* ── Nav wrap on small screens ── */
-nav{flex-wrap:wrap;gap:4px}
-nav .nb{font-size:.8rem;padding:8px 12px}
+
+
+
+/* ── Navigation ── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: #0c1322;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0 16px;
+}
+.nb {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  color: rgba(255,255,255,.45);
+  cursor: pointer;
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .05em;
+  padding: 15px 16px 12px;
+  text-transform: uppercase;
+  transition: color .15s, border-color .15s;
+}
+.nb:hover { color: #fff; }
+.nb.on { color: #fff; border-bottom-color: #6366f1; }
