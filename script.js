@@ -670,14 +670,15 @@ function openEvent(eid) {
     return '<tr><td><span class="bj jg">'+r.cat+'</span></td><td>'+(r.desc||'-')+'</td><td class="g">'+_m(r.amount)+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(r.notes||'-')+'</td><td style="white-space:nowrap">'+eBtn+dBtn+'</td></tr>';
   }).join('') : '<tr><td colspan="6" class="empty">Aucun revenu</td></tr>';
 
-  var delBtn = canDel ? '<button class="btn br2" style="margin-left:auto" onclick="delEvent(\''+eid+'\')">Supprimer</button>' : '';
+  var delBtn = canDel ? '<button class="btn br2" style="margin-left:6px" onclick="delEvent(\''+eid+'\')">Supprimer</button>' : '';
+  var editEvBtn = (_role==='admin') ? '<button class="btn bo" style="margin-left:auto" onclick="openEvInfoModal(\''+eid+'\')">Modifier</button>' : '';
 
   var html = '<button class="back-btn" onclick="showPage(\'ev-list\')">&#8592; Retour</button>'
     + notesHTML
     + '<div class="ev-detail-header"><div>'
     + '<div class="ev-detail-title">'+ev.name+'</div>'
     + '<div class="ev-detail-sub">'+(ev.date||'')+(ev.lieu?' &nbsp;·&nbsp; '+ev.lieu:'')+'</div>'
-    + progHTML + '</div><div style="display:flex;gap:6px">'+editEvBtn+delBtn+'</div></div>'
+    + progHTML + '</div>' + (editEvBtn || delBtn ? '<div style="display:flex;gap:6px">'+editEvBtn+delBtn+'</div>' : '') + '</div>'
     + '<div class="grid">'
     + '<div class="stat"><div class="sl">Revenus</div><div class="sv g">'+_m(sp.rev)+'</div></div>'
     + '<div class="stat"><div class="sl">Depenses</div><div class="sv r">'+_m(sp.dep)+'</div></div>'
@@ -720,7 +721,7 @@ function openEvent(eid) {
   document.querySelectorAll('.pg').forEach(function(el) { el.classList.remove('on'); });
   document.querySelectorAll('.nb').forEach(function(el) { el.classList.remove('on'); });
   var det = _g('pg-ev-detail');
-  if (det) { det.innerHTML = html; det.classList.add('on'); }
+  if (det) { det.innerHTML = html; det.classList.add('on'); showPage('ev-detail'); }
 }
 
 // ============================================================

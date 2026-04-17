@@ -112,13 +112,14 @@ tr:hover td{background:rgba(255,255,255,.02)}
 nav {
   position: sticky;
   top: 0;
-  z-index: 200;
+  z-index: 999;
   background: #0c1322;
   border-bottom: 1px solid rgba(255,255,255,.08);
   display: flex;
   flex-wrap: wrap;
   gap: 0;
-  padding: 0 16px;
+  padding: 0 12px;
+  margin-top: 0;
 }
 .nb {
   background: none;
@@ -136,3 +137,6 @@ nav {
 }
 .nb:hover { color: #fff; }
 .nb.on { color: #fff; border-bottom-color: #6366f1; }
+
+/* Ensure app header stays tight to top */
+body { padding-top: 0; }
