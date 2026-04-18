@@ -166,22 +166,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </div>
 
 <div id="pg-ev-list" class="pg">
-  <div class="card">
-    <div class="ct">Choisissez un evenement</div>
-    <div class="fb" style="margin-bottom:14px;gap:8px;flex-wrap:wrap">
-      <input id="ev-search" placeholder="🔍 Rechercher par nom ou lieu..." style="flex:1;min-width:180px" oninput="_rEvList()">
-      <div><lbl>Date debut</lbl><input id="ev-filter-date-from" type="date" style="width:150px" onchange="_rEvList()"></div>
-      <div><lbl>Date fin</lbl><input id="ev-filter-date-to" type="date" style="width:150px" onchange="_rEvList()"></div>
-      <select id="ev-filter-profit" style="min-width:140px" onchange="_rEvList()">
-        <option value="">Tous les profits</option>
-        <option value="pos">Profit positif</option>
-        <option value="neg">Profit negatif</option>
-      </select>
-      <button class="btn bo" style="font-size:.72rem" onclick="_resetEvFilters()">Reinitialiser</button>
-    </div>
-    <div id="ev-filter-count" style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
-    <div id="ev-list-wrap"></div>
-  </div>
+  <div class="card"><div class="ct">Choisissez un evenement</div><div id="ev-list-wrap"></div></div>
 </div>
 
 <div id="pg-ev-detail" class="pg"></div>
@@ -242,22 +227,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </div>
 
 <div id="pg-history" class="pg">
-  <div class="card">
-    <div class="ct">Dernieres actions</div>
-    <div class="fb" style="margin-bottom:14px;gap:8px;flex-wrap:wrap">
-      <input id="hist-search" placeholder="🔍 Rechercher action, evenement, par..." style="flex:1;min-width:200px" oninput="_rHistory()">
-      <select id="hist-filter-type" style="min-width:160px" onchange="_rHistory()">
-        <option value="">Toutes les actions</option>
-        <option value="ajoute">Ajouts</option>
-        <option value="modifie">Modifications</option>
-        <option value="supprime">Suppressions</option>
-      </select>
-      <select id="hist-filter-ev" id="hist-filter-ev" style="min-width:160px" onchange="_rHistory()">
-        <option value="">Tous les evenements</option>
-      </select>
-      <button class="btn bo" style="font-size:.72rem" onclick="_resetHistFilters()">Reinitialiser</button>
-    </div>
-    <div id="hist-filter-count" style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
+  <div class="card"><div class="ct">Dernieres actions</div>
     <table><thead><tr><th>Date</th><th>Action</th><th>Evenement</th><th>Detail</th><th>Montant</th><th>Par</th></tr></thead>
     <tbody id="history-tb"><tr><td colspan="6" class="empty">Chargement...</td></tr></tbody></table>
   </div>
@@ -353,17 +323,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
 // FIREBASE INIT
 // ============================================================
 var ADMIN_EMAIL = 'louispilippe2021@gmail.com';
-// ================================================================
-// CONFIGURATION FIREBASE
-// ================================================================
-// NOTE DE SÉCURITÉ: Cette clé API est visible côté client.
-// C'est normal pour Firebase, MAIS vous devez absolument:
-//   1. Restreindre cette clé dans Google Cloud Console:
-//      https://console.cloud.google.com/apis/credentials
-//      → Restrictions HTTP referrers → ajouter votre domaine uniquement
-//   2. Appliquer les règles Firestore (fichier firestore.rules fourni)
-//      qui empêchent tout accès non authentifié ou non autorisé.
-// ================================================================
 var FB_CONFIG = {
   apiKey: "AIzaSyBoD5b_iGOqmzt5R8VXUnjEKDk6xZsgK0c",
   authDomain: "financese-1b835.firebaseapp.com",
@@ -797,58 +756,20 @@ function openHistModal(jsonStr) {
 
 function closeHistModal() { _g('hist-modal').style.display='none'; }
 
-function _resetHistFilters() {
-  ['hist-search','hist-filter-type','hist-filter-ev'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
-  _rHistory();
-}
-
-function _fillHistEvSelect(rows) {
-  var sel = _g('hist-filter-ev'); if (!sel) return;
-  var current = sel.value;
-  var evIds = {};
-  rows.forEach(function(r){ if(r.eventId) evIds[r.eventId] = _evName(r.eventId); });
-  var opts = '<option value="">Tous les evenements</option>';
-  Object.keys(evIds).forEach(function(id){ opts += '<option value="'+id+'"'+(current===id?' selected':'')+'>'+evIds[id]+'</option>'; });
-  sel.innerHTML = opts;
-}
-
 function _rHistory() {
   var tb = _g('history-tb'); if (!tb) return;
   tb.innerHTML = '<tr><td colspan="6" class="empty">Chargement...</td></tr>';
-  db.collection('history').orderBy('createdAt','desc').limit(200).get().then(function(snap) {
+  db.collection('history').orderBy('createdAt','desc').limit(60).get().then(function(snap) {
     if (snap.empty) { tb.innerHTML = '<tr><td colspan="6" class="empty">Aucune action</td></tr>'; return; }
-    var allRows = [];
-    snap.forEach(function(d) { allRows.push(Object.assign({ _id: d.id }, d.data())); });
-
-    _fillHistEvSelect(allRows);
-
-    var search = (_g('hist-search') ? _g('hist-search').value.trim().toLowerCase() : '');
-    var typeFilter = (_g('hist-filter-type') ? _g('hist-filter-type').value : '');
-    var evFilter = (_g('hist-filter-ev') ? _g('hist-filter-ev').value : '');
-
-    var filtered = allRows.filter(function(r) {
-      if (typeFilter && (r.action||'').toLowerCase().indexOf(typeFilter) === -1) return false;
-      if (evFilter && r.eventId !== evFilter) return false;
-      if (search) {
-        var haystack = ((r.action||'') + ' ' + _evName(r.eventId) + ' ' + (r.by||'') + ' ' + (r.detail||'')).toLowerCase();
-        if (haystack.indexOf(search) === -1) return false;
-      }
-      return true;
-    });
-
-    var countEl = _g('hist-filter-count');
-    if (countEl) countEl.textContent = filtered.length < allRows.length ? (filtered.length + ' / ' + allRows.length + ' actions') : allRows.length + ' action' + (allRows.length > 1 ? 's' : '');
-
-    if (!filtered.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Aucun resultat</td></tr>'; return; }
-
     var h = '';
-    filtered.forEach(function(r) {
+    snap.forEach(function(d) {
+      var r = d.data();
       var dt = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('fr-CA') : '-';
       var bc = r.action.indexOf('supprime') > -1 ? 'jr' : r.action.indexOf('ajoute') > -1 ? 'jg' : 'jw';
       var detailCell = '-';
       if (r.detailObj) {
         var enc = encodeURIComponent(JSON.stringify(r.detailObj));
-        detailCell = '<button class="btn bo" style="padding:2px 8px;font-size:.7rem" onclick="openHistModal(''+enc+'')">Voir details</button>';
+        detailCell = '<button class="btn bo" style="padding:2px 8px;font-size:.7rem" onclick="openHistModal(\''+enc+'\')">Voir détails</button>';
       } else if (r.detail) {
         detailCell = '<span style="max-width:140px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle" title="'+r.detail+'">'+r.detail+'</span>';
       }
@@ -1564,41 +1485,12 @@ function _rDash() {
 // ============================================================
 // EVENT LIST
 // ============================================================
-function _resetEvFilters() {
-  var ids = ['ev-search','ev-filter-date-from','ev-filter-date-to','ev-filter-profit'];
-  ids.forEach(function(id){ var el=_g(id); if(el) el.value=''; });
-  _rEvList();
-}
-
 function _rEvList() {
   var c = _g('ev-list-wrap'); if (!c) return;
-  var search = (_g('ev-search') ? _g('ev-search').value.trim().toLowerCase() : '');
-  var dateFrom = _g('ev-filter-date-from') ? _g('ev-filter-date-from').value : '';
-  var dateTo = _g('ev-filter-date-to') ? _g('ev-filter-date-to').value : '';
-  var profitFilter = _g('ev-filter-profit') ? _g('ev-filter-profit').value : '';
-
-  var filtered = _data.events.filter(function(ev) {
-    if (search && !(ev.name||'').toLowerCase().includes(search) && !(ev.lieu||'').toLowerCase().includes(search)) return false;
-    if (dateFrom && ev.date && ev.date < dateFrom) return false;
-    if (dateTo && ev.date && ev.date > dateTo) return false;
-    if (profitFilter) {
-      var s = _split(ev.id);
-      if (profitFilter === 'pos' && s.profit < 0) return false;
-      if (profitFilter === 'neg' && s.profit >= 0) return false;
-    }
-    return true;
-  });
-
-  var countEl = _g('ev-filter-count');
-  if (countEl) {
-    var total = _data.events.length;
-    countEl.textContent = filtered.length < total ? (filtered.length + ' / ' + total + ' evenements') : total + ' evenement' + (total > 1 ? 's' : '');
-  }
-
-  if (!filtered.length) { c.innerHTML='<div class="empty">Aucun evenement correspondant</div>'; return; }
-  c.innerHTML = '<div class="ev-grid">' + filtered.map(function(ev) {
+  if (!_data.events.length) { c.innerHTML='<div class="empty">Aucun evenement</div>'; return; }
+  c.innerHTML = '<div class="ev-grid">' + _data.events.map(function(ev) {
     var s = _split(ev.id);
-    return '<div class="ev-card" onclick="openEvent(''+ev.id+'')">'
+    return '<div class="ev-card" onclick="openEvent(\''+ev.id+'\')">'
       + '<div class="ev-name">'+ev.name+'</div>'
       + '<div class="ev-date">'+(ev.date||'')+(ev.lieu?' · '+ev.lieu:'')+'</div>'
       + '<div class="ev-stats">'
