@@ -104,7 +104,23 @@ tr:hover td{background:rgba(255,255,255,.02)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-txt{font-size:.78rem;color:var(--muted);letter-spacing:.1em}
 .chart-wrap{position:relative;width:100%;overflow-x:auto;min-height:200px}
-@media(max-width:600px){header{height:auto;padding:10px 14px}nav{margin-left:0;width:100%}.nb{font-size:.7rem;padding:5px 8px}.user-info{display:none}}
+.nav-group{position:relative;display:inline-block}
+.nav-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;min-width:170px;z-index:200;padding:6px 0;box-shadow:0 8px 24px rgba(0,0,0,.55)}
+.nav-dropdown.open{display:block}
+.nav-dropdown .nb{display:block;width:100%;text-align:left;padding:9px 16px;border-bottom:none;border-radius:0;font-size:.78rem}
+.nav-dropdown .nb:hover{background:var(--card2)}
+.nav-dropdown .nb.on{color:var(--green)}
+.nav-group-btn{transition:color .15s}
+.nav-group-btn.active{color:var(--text)}
+.hamburger{display:none;background:none;border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:1.1rem;margin-left:auto;line-height:1}
+.mobile-menu{display:none;position:fixed;top:58px;left:0;width:100%;background:var(--card);border-bottom:1px solid var(--border);z-index:150;padding:8px 0 14px;box-shadow:0 8px 32px rgba(0,0,0,.65);max-height:calc(100vh - 58px);overflow-y:auto}
+.mobile-menu.open{display:block}
+.mobile-nb{display:block;width:100%;text-align:left;padding:11px 24px;border-bottom:none;border-radius:0;font-size:.82rem}
+.mobile-nb:hover{background:var(--card2);color:var(--text)}
+.mobile-nb.on{color:var(--green);background:rgba(74,222,128,.06)}
+.mobile-section{font-size:.62rem;color:var(--muted);letter-spacing:.14em;padding:12px 24px 4px;font-weight:700;text-transform:uppercase}
+@media(max-width:780px){.nav-group{display:none}.hamburger{display:block}}
+@media(max-width:600px){header{height:auto;padding:10px 14px}nav{flex-wrap:nowrap}.nb{font-size:.7rem;padding:5px 8px}.user-info{display:none}}
 
 .modal-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .modal-row input,.modal-row select{margin-bottom:0;flex:1;min-width:80px}
@@ -141,17 +157,52 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div><div class="bn">SOUTHEVENTS</div><div class="bs">Gestion Financiere</div></div>
   </div>
   <nav>
-    <button id="nb-dash" class="nb on" onclick="showPage('dash')">Dashboard</button>
-    <button id="nb-ev-list" class="nb" onclick="showPage('ev-list')">Evenements</button>
-    <button id="nb-add" class="nb" onclick="showPage('add')">Ajouter</button>
-    <button id="nb-graphs" class="nb" onclick="showPage('graphs')">Graphiques</button>
-    <button id="nb-fonds" class="nb" onclick="showPage('fonds')">Fond commun</button>
-    <button id="nb-history" class="nb" onclick="showPage('history')">Historique</button>
-    <button id="nb-users" class="nb admin-only" onclick="showPage('users')">Gestion admins</button>
-    <button id="nb-ex" class="nb" onclick="showPage('ex')">Exporter</button>
+    <div class="nav-group">
+      <button class="nb nav-group-btn active" id="ng-vue" onclick="_toggleNavGroup('vue')">Vue &#9662;</button>
+      <div class="nav-dropdown" id="nd-vue">
+        <button id="nb-dash" class="nb on" onclick="_navGo('dash','vue')">Dashboard</button>
+        <button id="nb-graphs" class="nb" onclick="_navGo('graphs','vue')">Graphiques</button>
+      </div>
+    </div>
+    <div class="nav-group">
+      <button class="nb nav-group-btn" id="ng-ev" onclick="_toggleNavGroup('ev')">Evenements &#9662;</button>
+      <div class="nav-dropdown" id="nd-ev">
+        <button id="nb-ev-list" class="nb" onclick="_navGo('ev-list','ev')">Liste</button>
+        <button id="nb-add" class="nb" onclick="_navGo('add','ev')">Ajouter</button>
+      </div>
+    </div>
+    <div class="nav-group">
+      <button class="nb nav-group-btn" id="ng-fin" onclick="_toggleNavGroup('fin')">Finances &#9662;</button>
+      <div class="nav-dropdown" id="nd-fin">
+        <button id="nb-fonds" class="nb" onclick="_navGo('fonds','fin')">Fond commun</button>
+        <button id="nb-history" class="nb" onclick="_navGo('history','fin')">Historique</button>
+        <button id="nb-ex" class="nb" onclick="_navGo('ex','fin')">Exporter</button>
+      </div>
+    </div>
+    <div class="nav-group admin-only">
+      <button class="nb nav-group-btn" id="ng-adm" onclick="_toggleNavGroup('adm')">Admin &#9662;</button>
+      <div class="nav-dropdown" id="nd-adm">
+        <button id="nb-users" class="nb" onclick="_navGo('users','adm')">Gestion admins</button>
+      </div>
+    </div>
+    <button class="hamburger" id="hamburger-btn" onclick="_toggleHamburger()" aria-label="Menu">&#9776;</button>
     <div class="user-info" id="user-email"></div>
-    <button class="btn br2" style="margin-left:8px;padding:5px 10px;font-size:.7rem" onclick="doLogout()">Deconnexion</button>
+    <button class="btn br2" style="margin-left:8px;padding:5px 10px;font-size:.7rem" onclick="doLogout">Deconnexion</button>
   </nav>
+  <div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-section">VUE</div>
+    <button class="nb mobile-nb" onclick="_navGoMobile('dash')">Dashboard</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('graphs')">Graphiques</button>
+    <div class="mobile-section">EVENEMENTS</div>
+    <button class="nb mobile-nb" onclick="_navGoMobile('ev-list')">Liste des evenements</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('add')">Ajouter un evenement</button>
+    <div class="mobile-section">FINANCES</div>
+    <button class="nb mobile-nb" onclick="_navGoMobile('fonds')">Fond commun</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('history')">Historique</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('ex')">Exporter</button>
+    <div class="mobile-section admin-only">ADMIN</div>
+    <button class="nb mobile-nb admin-only" onclick="_navGoMobile('users')">Gestion admins</button>
+  </div>
 </header>
 
 <div class="wrap">
@@ -926,12 +977,28 @@ function _rCharts() {
 // ============================================================
 // NAVIGATION
 // ============================================================
+// Map page -> nav group
+var _pageGroup = {
+  'dash':'vue','graphs':'vue',
+  'ev-list':'ev','add':'ev',
+  'fonds':'fin','history':'fin','ex':'fin',
+  'users':'adm'
+};
+
 function showPage(id) {
   if (id !== 'ev-detail') _currentEid = null;
   document.querySelectorAll('.pg').forEach(function(el) { el.classList.remove('on'); });
   document.querySelectorAll('.nb').forEach(function(el) { el.classList.remove('on'); });
+  document.querySelectorAll('.mobile-nb').forEach(function(el) { el.classList.remove('on'); });
+  document.querySelectorAll('.nav-group-btn').forEach(function(el) { el.classList.remove('active'); });
   var pg = _g('pg-' + id); if (pg) pg.classList.add('on');
   var nb = _g('nb-' + id); if (nb) nb.classList.add('on');
+  // Highlight mobile button
+  var mnb = document.querySelector('.mobile-nb[onclick*="' + id + '"]');
+  if (mnb) mnb.classList.add('on');
+  // Highlight group button
+  var grp = _pageGroup[id];
+  if (grp) { var gb = _g('ng-' + grp); if(gb) gb.classList.add('active'); }
   if (id === 'graphs') setTimeout(_rCharts, 80);
   if (id === 'history') _rHistory();
   if (id === 'fonds') _rFonds();
@@ -1727,6 +1794,53 @@ function _refresh() {
   _rCats();
   if (_currentEid) openEvent(_currentEid);
 }
+
+// ============================================================
+// NAV HAMBURGER & DROPDOWNS
+// ============================================================
+var _activeNavGroup = null;
+
+function _toggleNavGroup(id) {
+  var nd = _g('nd-' + id); if (!nd) return;
+  var isOpen = nd.classList.contains('open');
+  document.querySelectorAll('.nav-dropdown').forEach(function(el){ el.classList.remove('open'); });
+  document.querySelectorAll('.nav-group-btn').forEach(function(el){
+    var grp = _pageGroup[_currentPageId];
+    if (!el.id || el.id !== 'ng-' + grp) el.classList.remove('active');
+  });
+  _activeNavGroup = null;
+  if (!isOpen) { nd.classList.add('open'); var btn = _g('ng-'+id); if(btn) btn.classList.add('active'); _activeNavGroup = id; }
+}
+
+function _navGo(page, group) {
+  document.querySelectorAll('.nav-dropdown').forEach(function(el){ el.classList.remove('open'); });
+  _activeNavGroup = null;
+  showPage(page);
+}
+
+function _toggleHamburger() {
+  var m = _g('mobile-menu'); if(m) m.classList.toggle('open');
+}
+
+function _navGoMobile(page) {
+  var m = _g('mobile-menu'); if(m) m.classList.remove('open');
+  showPage(page);
+}
+
+var _currentPageId = 'dash';
+var _origShowPage = showPage;
+showPage = function(id) { _currentPageId = id; _origShowPage(id); };
+
+document.addEventListener('click', function(e) {
+  if (_activeNavGroup && !e.target.closest('.nav-group')) {
+    document.querySelectorAll('.nav-dropdown').forEach(function(el){ el.classList.remove('open'); });
+    _activeNavGroup = null;
+  }
+  var mm = _g('mobile-menu');
+  if (mm && mm.classList.contains('open') && !e.target.closest('#mobile-menu') && !e.target.closest('#hamburger-btn')) {
+    mm.classList.remove('open');
+  }
+});
 
 window.onload = function() { _initShareholderForm(); };
 </script>
