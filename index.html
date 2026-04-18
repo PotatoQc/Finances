@@ -848,7 +848,7 @@ function _rHistory() {
       var detailCell = '-';
       if (r.detailObj) {
         var enc = encodeURIComponent(JSON.stringify(r.detailObj));
-        detailCell = '<button class="btn bo" style="padding:2px 8px;font-size:.7rem" onclick="openHistModal(''+enc+'')">Voir details</button>';
+        detailCell = '<button class="btn bo" style="padding:2px 8px;font-size:.7rem" onclick="openHistModal(\'' + enc + '\')">Voir details</button>';
       } else if (r.detail) {
         detailCell = '<span style="max-width:140px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle" title="'+r.detail+'">'+r.detail+'</span>';
       }
@@ -1598,7 +1598,7 @@ function _rEvList() {
   if (!filtered.length) { c.innerHTML='<div class="empty">Aucun evenement correspondant</div>'; return; }
   c.innerHTML = '<div class="ev-grid">' + filtered.map(function(ev) {
     var s = _split(ev.id);
-    return '<div class="ev-card" onclick="openEvent(''+ev.id+'')">'
+    return '<div class="ev-card" onclick="openEvent(\'' + ev.id + '\')">'
       + '<div class="ev-name">'+ev.name+'</div>'
       + '<div class="ev-date">'+(ev.date||'')+(ev.lieu?' · '+ev.lieu:'')+'</div>'
       + '<div class="ev-stats">'
