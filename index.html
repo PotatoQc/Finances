@@ -247,6 +247,7 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <div class="frow">
       <div><lbl>Objectif billets</lbl><input id="ev-obj" type="number" placeholder="Ex: 100" min="0"></div>
+      <div><lbl>Billets vendus</lbl><input id="ev-sold" type="number" placeholder="Ex: 100" min="0"></div>
       <div><lbl>Notes</lbl><input id="ev-notes" placeholder="Infos importantes..."></div>
     </div>
     <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
@@ -258,6 +259,15 @@ tr:hover td{background:rgba(255,255,255,.02)}
         <div><lbl>Pourcentage fonds (%)</lbl>
           <input id="ev-fc-pct" type="number" min="0" max="100" step="0.1" value="10">
         </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+      <div class="ct" style="margin-bottom:10px">Frais de transaction Vincent</div>
+      <div class="frow">
+        <div><lbl>Rembourser les frais</lbl>
+          <select id="ev-tx-on"><option value="1">Oui</option><option value="0">Non</option></select>
+        </div>
+        <div><lbl>Billets Vincent</lbl><input id="ev-vincent-tickets" type="number" placeholder="Ex: 40" min="0"></div>
       </div>
     </div>
     <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
@@ -331,6 +341,13 @@ tr:hover td{background:rgba(255,255,255,.02)}
   <div class="card"><div class="ct">Utilisateurs actifs</div>
     <table><thead><tr><th>Nom</th><th>Email</th><th>Role</th><th></th></tr></thead>
     <tbody id="users-tb"></tbody></table>
+  </div>
+  <div class="card"><div class="ct">Frais de transaction</div>
+    <div class="frow">
+      <div><lbl>Pourcentage par billet (%)</lbl><input id="admin-tx-pct" type="number" min="0" max="100" step="0.01"></div>
+      <div><lbl>Frais fixe par billet ($)</lbl><input id="admin-tx-fixed" type="number" min="0" step="0.01"></div>
+    </div>
+    <button class="btn by2" onclick="saveTxSettings()">Sauvegarder frais</button>
   </div>
   <div class="card"><div class="ct">Niveaux de permissions</div>
     <table><thead><tr><th>Permission</th><th>Viewer</th><th>Manager</th><th>Admin</th></tr></thead>
@@ -441,7 +458,8 @@ var _data = {
   cats:{
     exp:["Lieu","Commissions","Salaires","DJ","Contenu/Video","Marketing","Accessoires","Materiel","Transport","Nourriture","Autre"], 
     rev:["Billets en ligne","Vente porte","Cash porte","Remboursement salle","Virements","Commandite","Autre"]
-  }
+  },
+  settings:{ txFeePct:0.75, txFeeFixed:0.40 }
 };
 
 var _currentEvTab = "dep";
@@ -479,6 +497,22 @@ function _sumRev(eid) {
   return t;
 }
 
+function _txFeePct() {
+  return Number(_data.settings && _data.settings.txFeePct !== undefined ? _data.settings.txFeePct : 0.75) || 0;
+}
+
+function _txFeeFixed() {
+  return Number(_data.settings && _data.settings.txFeeFixed !== undefined ? _data.settings.txFeeFixed : 0.40) || 0;
+}
+
+function _soldTickets(ev) {
+  return Math.max(0, Math.floor(Number(ev && ev.soldTickets) || 0));
+}
+
+function _vincentTickets(ev) {
+  return Math.max(0, Math.floor(Number(ev && ev.vincentTickets) || 0));
+}
+
 function _getEvConfig(eid) {
   // Returns fonds commun config + shareholders for a given event
   var ev = null;
@@ -487,6 +521,7 @@ function _getEvConfig(eid) {
   return {
     fcOn: ev.fcOn !== false,
     fcPct: (ev.fcPct !== undefined && ev.fcPct !== null) ? Number(ev.fcPct) : 10,
+    txFeesOn: ev.txFeesOn !== false,
     shareholders: ev.shareholders && ev.shareholders.length ? ev.shareholders : [{name:'Vincent',pct:18},{name:'LP Cote',pct:41},{name:'LP Viens',pct:41}]
   };
 }
@@ -504,13 +539,9 @@ function _split(eid) {
     if (ev) {
       var prix = Number(ev.prix) || 0;
       vincPrixBillet = prix;
-      var billetsRevs = _data.revenues.filter(function(rv) {
-        return rv.eventId == eid && rv.cat === 'Billets en ligne' && rv.status === 'recu';
-      });
-      var nbBillets = billetsRevs.reduce(function(acc, rv) { return acc + (Number(rv.amount) || 0); }, 0);
-      if (prix > 0 && nbBillets > 0) {
-        vincNbTickets = Math.round(nbBillets / prix);
-        vincFee = (0.0075 * prix + 0.40) * vincNbTickets;
+      vincNbTickets = _vincentTickets(ev);
+      if (cfg.txFeesOn && prix > 0 && vincNbTickets > 0) {
+        vincFee = ((_txFeePct() / 100) * prix + _txFeeFixed()) * vincNbTickets;
       }
     }
   }
@@ -655,6 +686,15 @@ function _initListeners() {
       }
       _rCats();
       _fillCatSelects();
+    }),
+    db.collection('config').doc('settings').onSnapshot(function(doc) {
+      if (doc.exists) {
+        var d = doc.data();
+        if (d.txFeePct !== undefined) _data.settings.txFeePct = Number(d.txFeePct) || 0;
+        if (d.txFeeFixed !== undefined) _data.settings.txFeeFixed = Number(d.txFeeFixed) || 0;
+      }
+      _fillTxSettingsForm();
+      _refresh();
     })
   );
 }
@@ -726,6 +766,8 @@ function closeEvModal() {
 
 function _renderEvModal(cfg) {
   var shHTML = '';
+  var ev = null;
+  for (var ei = 0; ei < _data.events.length; ei++) if (_data.events[ei].id == _editEid) { ev = _data.events[ei]; break; }
   for(var i=0;i<_editShRows.length;i++){
     shHTML += '<div class="modal-row">'
       + '<input placeholder="Nom" value="'+_editShRows[i].name+'" onchange="_editShRows['+i+'].name=this.value">'
@@ -740,6 +782,12 @@ function _renderEvModal(cfg) {
     + '<div class="frow">'
     + '<div><lbl>Activer</lbl><select id="modal-fc-on"><option value="1"'+(cfg.fcOn?' selected':'')+'>Oui</option><option value="0"'+(!cfg.fcOn?' selected':'')+'>Non</option></select></div>'
     + '<div><lbl>Pourcentage (%)</lbl><input id="modal-fc-pct" type="number" min="0" max="100" step="0.1" value="'+cfg.fcPct+'"></div>'
+    + '</div></div>'
+    + '<div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">'
+    + '<div class="ct" style="margin-bottom:8px">Frais de transaction Vincent</div>'
+    + '<div class="frow">'
+    + '<div><lbl>Rembourser les frais</lbl><select id="modal-tx-on"><option value="1"'+(cfg.txFeesOn?' selected':'')+'>Oui</option><option value="0"'+(!cfg.txFeesOn?' selected':'')+'>Non</option></select></div>'
+    + '<div><lbl>Billets Vincent</lbl><input id="modal-vincent-tickets" type="number" min="0" value="'+_vincentTickets(ev)+'"></div>'
     + '</div></div>'
     + '<div style="border-top:1px solid var(--border);padding-top:14px">'
     + '<div class="ct" style="margin-bottom:6px">Actionnaires <span style="color:var(--muted);font-weight:400;font-size:.7rem">(total doit etre 100%)</span></div>'
@@ -774,20 +822,43 @@ function saveEvConfig() {
   if(!_editEid) return;
   var fcOn = _g('modal-fc-on').value === '1';
   var fcPct = Number(_g('modal-fc-pct').value) || 10;
+  var txFeesOn = _g('modal-tx-on').value === '1';
+  var vincentTicketsVal = _g('modal-vincent-tickets').value;
+  if (vincentTicketsVal !== '' && (isNaN(Number(vincentTicketsVal)) || Number(vincentTicketsVal) < 0 || !Number.isInteger(Number(vincentTicketsVal)))) { toast('Billets Vincent: nombre entier positif requis.', 'error'); return; }
   var total = 0;
   for(var i=0;i<_editShRows.length;i++) total += Number(_editShRows[i].pct)||0;
   if(Math.abs(total-100) > 0.1) { toast('Le total des actionnaires doit etre 100%','error'); return; }
   var sh = _editShRows.map(function(s){ return {name:s.name, pct:Number(s.pct)}; });
-  db.collection('events').doc(_editEid).update({ fcOn:fcOn, fcPct:fcPct, shareholders:sh })
+  db.collection('events').doc(_editEid).update({ fcOn:fcOn, fcPct:fcPct, txFeesOn:txFeesOn, vincentTickets:Number(vincentTicketsVal)||0, shareholders:sh })
     .then(function(){
       toast('Parametres sauvegardes!','success');
       logHistory('Config evenement modifiee', _editEid, 'Config mise a jour', 0, {
   'Fonds commun': fcOn ? 'Oui ('+fcPct+'%)' : 'Non',
+  'Frais transaction Vincent': txFeesOn ? 'Oui' : 'Non',
+  'Billets Vincent': vincentTicketsVal||0,
   'Actionnaires': sh.map(function(s){return s.name+' '+s.pct+'%';}).join(', ')
 });
       closeEvModal();
       // onSnapshot will fire -> _refresh() -> openEvent(_currentEid) auto re-render
     }).catch(function(e){ alert('Erreur: '+e.message); });
+}
+
+function _fillTxSettingsForm() {
+  var pct = _g('admin-tx-pct');
+  var fixed = _g('admin-tx-fixed');
+  if (pct) pct.value = _txFeePct();
+  if (fixed) fixed.value = _txFeeFixed().toFixed(2);
+}
+
+function saveTxSettings() {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  var pct = Number(_g('admin-tx-pct').value);
+  var fixed = Number(_g('admin-tx-fixed').value);
+  if (isNaN(pct) || pct < 0 || pct > 100) { toast('Pourcentage invalide.', 'error'); return; }
+  if (isNaN(fixed) || fixed < 0) { toast('Frais fixe invalide.', 'error'); return; }
+  db.collection('config').doc('settings').set({ txFeePct:pct, txFeeFixed:fixed }, { merge:true })
+    .then(function(){ toast('Frais de transaction sauvegardes!', 'success'); })
+    .catch(function(e){ alert('Erreur: '+e.message); });
 }
 
 // ============================================================
@@ -1046,6 +1117,10 @@ function addEvent() {
   if (isNaN(prixVal) || prixVal < 0) { toast('Le prix du billet doit etre 0 ou plus.', 'error'); return; }
   var objVal = _g('ev-obj').value;
   if (objVal !== '' && (isNaN(Number(objVal)) || Number(objVal) < 0 || !Number.isInteger(Number(objVal)))) { toast('Objectif: nombre entier positif requis.', 'error'); return; }
+  var soldVal = _g('ev-sold').value;
+  if (soldVal !== '' && (isNaN(Number(soldVal)) || Number(soldVal) < 0 || !Number.isInteger(Number(soldVal)))) { toast('Billets vendus: nombre entier positif requis.', 'error'); return; }
+  var vincentTicketsVal = _g('ev-vincent-tickets').value;
+  if (vincentTicketsVal !== '' && (isNaN(Number(vincentTicketsVal)) || Number(vincentTicketsVal) < 0 || !Number.isInteger(Number(vincentTicketsVal)))) { toast('Billets Vincent: nombre entier positif requis.', 'error'); return; }
   // Sync shareholder names from DOM inputs before saving
   var shInputs = document.querySelectorAll('#shareholders-form .modal-row');
   var shFinal = [];
@@ -1058,14 +1133,16 @@ function addEvent() {
   if(!shFinal.length) shFinal = [{name:'Vincent',pct:7},{name:'LP Cote',pct:46.5},{name:'LP Viens',pct:46.5}];
   var fcOn2 = _g('ev-fc-on').value === '1';
   var fcPct2 = Number(_g('ev-fc-pct').value)||10;
+  var txFeesOn2 = _g('ev-tx-on').value === '1';
   db.collection('events').add({
     name:nm, date:_g('ev-d').value, lieu:_g('ev-l').value,
     prix:Number(_g('ev-p').value)||0, objectif:Number(_g('ev-obj').value)||0,
-    notes:_g('ev-notes').value||'', fcOn:fcOn2, fcPct:fcPct2, shareholders:shFinal,
+    soldTickets:Number(soldVal)||0, vincentTickets:Number(vincentTicketsVal)||0,
+    notes:_g('ev-notes').value||'', fcOn:fcOn2, fcPct:fcPct2, txFeesOn:txFeesOn2, shareholders:shFinal,
     createdBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   }).then(function() {
     ['ev-n','ev-l','ev-notes'].forEach(function(id){_g(id).value='';});
-    _g('ev-obj').value=''; _shRows=[{name:'Vincent',pct:18},{name:'LP Cote',pct:41},{name:'LP Viens',pct:41}]; _renderShForm();
+    _g('ev-obj').value=''; _g('ev-sold').value=''; _g('ev-vincent-tickets').value=''; _g('ev-tx-on').value='1'; _shRows=[{name:'Vincent',pct:7},{name:'LP Cote',pct:46.5},{name:'LP Viens',pct:46.5}]; _renderShForm();
     toast('Evenement ajoute!','success');
     logHistory('Evenement ajoute', null, nm, 0, {
   'Nom': nm,
@@ -1073,7 +1150,10 @@ function addEvent() {
   'Lieu': _g('ev-l').value||'-',
   'Prix billet': _g('ev-p').value||0,
   'Objectif billets': _g('ev-obj').value||0,
+  'Billets vendus': soldVal||0,
+  'Billets Vincent': vincentTicketsVal||0,
   'Fonds commun': fcOn2 ? 'Oui ('+fcPct2+'%)' : 'Non',
+  'Frais transaction Vincent': txFeesOn2 ? 'Oui' : 'Non',
   'Actionnaires': shFinal.map(function(s){return s.name+' '+s.pct+'%';}).join(', ')
 });
   }).catch(function(e) { alert('Erreur: '+e.message); });
@@ -1220,10 +1300,10 @@ function openEvent(eid) {
   // Progress bar
   var progHTML = '';
   if (ev.objectif && ev.objectif > 0) {
-    var billet_revs = revs.filter(function(r) { return r.cat && (r.cat.toLowerCase().indexOf('billet') > -1 || r.cat.toLowerCase().indexOf('porte') > -1); });
-    var pct = Math.min((billet_revs.length / ev.objectif) * 100, 100);
+    var soldTickets = _soldTickets(ev);
+    var pct = Math.min((soldTickets / ev.objectif) * 100, 100);
     var cls = pct >= 100 ? 'over' : pct >= 70 ? 'warn' : 'ok';
-    progHTML = '<div class="prog-wrap"><div class="prog-label">Billets: ' + billet_revs.length + ' / ' + ev.objectif + ' (' + Math.round(pct) + '%)</div>'
+    progHTML = '<div class="prog-wrap"><div class="prog-label">Billets: ' + soldTickets + ' / ' + ev.objectif + ' (' + Math.round(pct) + '%)</div>'
       + '<div class="prog-bar-bg"><div class="prog-bar ' + cls + '" style="width:' + pct + '%"></div></div></div>';
   }
 
@@ -1243,7 +1323,7 @@ function openEvent(eid) {
       extra = '<div class="sc" style="color:var(--yellow)">'+sp.vincNbTickets+' billets · '+_m(sp.vincFee)+' frais</div>';
       var vincObj = {};
       vincObj['7% du partage'] = _m(sp.shares['Vincent'] - sp.vincFee);
-      vincObj['Frais de transaction ((' + sp.vincPrixBillet + ' x 0.0075 + 0.40$) x ' + sp.vincNbTickets + ' billets)'] = _m(sp.vincFee);
+      vincObj['Frais de transaction ((' + sp.vincPrixBillet + ' x ' + (_txFeePct()/100) + ' + ' + _m(_txFeeFixed()) + ') x ' + sp.vincNbTickets + ' billets)'] = _m(sp.vincFee);
       vincObj['Total Vincent'] = _m(sp.shares['Vincent']);
       var vincData = encodeURIComponent(JSON.stringify(vincObj));
       detailBtn = '<button class="btn by2" style="padding:2px 8px;font-size:.68rem;margin-top:6px" onclick="openHistModal(\''+vincData+'\')" >Détails</button>';
@@ -1327,6 +1407,7 @@ function openEditEventModal(eid) {
   _g('eem-lieu').value = ev.lieu || '';
   _g('eem-prix').value = ev.prix || '';
   _g('eem-obj').value = ev.objectif || '';
+  _g('eem-sold').value = _soldTickets(ev);
   _g('eem-notes').value = ev.notes || '';
   _g('edit-event-modal').style.display = 'flex';
 }
@@ -1338,19 +1419,23 @@ function saveEditEvent() {
   var ev = null;
   for (var i = 0; i < _data.events.length; i++) if (_data.events[i].id == _editEvId) { ev = _data.events[i]; break; }
   if (!ev) return;
-  var before = { Nom: ev.name||'', Date: ev.date||'', Lieu: ev.lieu||'', 'Prix billet': ev.prix||'', 'Objectif billets': ev.objectif||'', Notes: ev.notes||'' };
+  var soldVal = _g('eem-sold').value;
+  if (soldVal !== '' && (isNaN(Number(soldVal)) || Number(soldVal) < 0 || !Number.isInteger(Number(soldVal)))) { toast('Billets vendus: nombre entier positif requis.', 'error'); return; }
+  var before = { Nom: ev.name||'', Date: ev.date||'', Lieu: ev.lieu||'', 'Prix billet': ev.prix||'', 'Objectif billets': ev.objectif||'', 'Billets vendus': _soldTickets(ev), Notes: ev.notes||'' };
   var after = {
     Nom: _g('eem-name').value,
     Date: _g('eem-date').value,
     Lieu: _g('eem-lieu').value,
     'Prix billet': _g('eem-prix').value,
     'Objectif billets': _g('eem-obj').value,
+    'Billets vendus': _g('eem-sold').value || 0,
     Notes: _g('eem-notes').value
   };
   db.collection('events').doc(_editEvId).update({
     name: after.Nom, date: after.Date, lieu: after.Lieu,
     prix: Number(after['Prix billet']) || 0,
     objectif: Number(after['Objectif billets']) || 0,
+    soldTickets: Number(after['Billets vendus']) || 0,
     notes: after.Notes
   }).then(function() {
     toast('Evenement modifie!', 'success');
@@ -1791,6 +1876,7 @@ function _refresh() {
   _rEvList();
   _rDash();
   _fillCatSelects();
+  _fillTxSettingsForm();
   _rCats();
   if (_currentEid) openEvent(_currentEid);
 }
@@ -1861,6 +1947,7 @@ window.onload = function() { _initShareholderForm(); };
     </div>
     <div class="frow">
       <div><lbl>Objectif billets</lbl><input id="eem-obj" type="number" min="0"></div>
+      <div><lbl>Billets vendus</lbl><input id="eem-sold" type="number" min="0"></div>
     </div>
     <div><lbl>Notes</lbl><textarea id="eem-notes" style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:.84rem;outline:none;min-height:70px;resize:vertical;margin-bottom:8px"></textarea></div>
     <button class="btn bw" style="margin-top:8px" onclick="saveEditEvent()">Sauvegarder</button>
