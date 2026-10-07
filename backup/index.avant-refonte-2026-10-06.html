@@ -104,18 +104,36 @@ tr:hover td{background:rgba(255,255,255,.02)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-txt{font-size:.78rem;color:var(--muted);letter-spacing:.1em}
 .chart-wrap{position:relative;width:100%;overflow-x:auto;min-height:200px}
-@media(max-width:600px){header{height:auto;padding:10px 14px}nav{margin-left:0;width:100%}.nb{font-size:.7rem;padding:5px 8px}.user-info{display:none}}
+.nav-group{position:relative;display:inline-block}
+.nav-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--card);border:1px solid var(--border);border-radius:8px;min-width:170px;z-index:200;padding:6px 0;box-shadow:0 8px 24px rgba(0,0,0,.55)}
+.nav-dropdown.open{display:block}
+.nav-dropdown .nb{display:block;width:100%;text-align:left;padding:9px 16px;border-bottom:none;border-radius:0;font-size:.78rem}
+.nav-dropdown .nb:hover{background:var(--card2)}
+.nav-dropdown .nb.on{color:var(--green)}
+.nav-group-btn{transition:color .15s}
+.nav-group-btn.active{color:var(--text)}
+.hamburger{display:none;background:none;border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;cursor:pointer;font-size:1.1rem;margin-left:auto;line-height:1}
+.mobile-menu{display:none;position:fixed;top:58px;left:0;width:100%;background:var(--card);border-bottom:1px solid var(--border);z-index:150;padding:8px 0 14px;box-shadow:0 8px 32px rgba(0,0,0,.65);max-height:calc(100vh - 58px);overflow-y:auto}
+.mobile-menu.open{display:block}
+.mobile-nb{display:block;width:100%;text-align:left;padding:11px 24px;border-bottom:none;border-radius:0;font-size:.82rem}
+.mobile-nb:hover{background:var(--card2);color:var(--text)}
+.mobile-nb.on{color:var(--green);background:rgba(74,222,128,.06)}
+.mobile-section{font-size:.62rem;color:var(--muted);letter-spacing:.14em;padding:12px 24px 4px;font-weight:700;text-transform:uppercase}
+@media(max-width:780px){.nav-group{display:none}.hamburger{display:block}}
+@media(max-width:600px){header{height:auto;padding:10px 14px}nav{flex-wrap:nowrap}.nb{font-size:.7rem;padding:5px 8px}.user-info{display:none}}
 
 .modal-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .modal-row input,.modal-row select{margin-bottom:0;flex:1;min-width:80px}
 .modal-row .rm{background:none;border:1px solid var(--red);color:var(--red);border-radius:5px;padding:4px 8px;cursor:pointer;font-size:.72rem}
 .modal-row .rm:hover{background:var(--red);color:#000}
 .pct-total{font-size:.78rem;margin:8px 0 4px;font-weight:700}
+.diff-changed{background:rgba(251,191,36,.18);border-radius:3px;padding:0 3px}
+.diff-unchanged{color:var(--muted)}
 </style>
 </head>
 <body>
 
-<div id="loading"><div class="spinner"></div><div class="loading-txt" id="loading-txt">Chargement...</div></div>
+<div id="loading" style="display:none"><div class="spinner"></div><div class="loading-txt" id="loading-txt">Chargement...</div></div>
 
 <div id="login-screen" style="display:none">
   <div class="login-box">
@@ -139,16 +157,52 @@ tr:hover td{background:rgba(255,255,255,.02)}
     <div><div class="bn">SOUTHEVENTS</div><div class="bs">Gestion Financiere</div></div>
   </div>
   <nav>
-    <button id="nb-dash" class="nb on" onclick="showPage('dash')">Dashboard</button>
-    <button id="nb-ev-list" class="nb" onclick="showPage('ev-list')">Evenements</button>
-    <button id="nb-add" class="nb" onclick="showPage('add')">Ajouter</button>
-    <button id="nb-graphs" class="nb" onclick="showPage('graphs')">Graphiques</button>
-    <button id="nb-history" class="nb" onclick="showPage('history')">Historique</button>
-    <button id="nb-users" class="nb admin-only" onclick="showPage('users')">Utilisateurs</button>
-    <button id="nb-ex" class="nb" onclick="showPage('ex')">Exporter</button>
+    <div class="nav-group">
+      <button class="nb nav-group-btn active" id="ng-vue" onclick="_toggleNavGroup('vue')">Vue &#9662;</button>
+      <div class="nav-dropdown" id="nd-vue">
+        <button id="nb-dash" class="nb on" onclick="_navGo('dash','vue')">Dashboard</button>
+        <button id="nb-graphs" class="nb" onclick="_navGo('graphs','vue')">Graphiques</button>
+      </div>
+    </div>
+    <div class="nav-group">
+      <button class="nb nav-group-btn" id="ng-ev" onclick="_toggleNavGroup('ev')">Evenements &#9662;</button>
+      <div class="nav-dropdown" id="nd-ev">
+        <button id="nb-ev-list" class="nb" onclick="_navGo('ev-list','ev')">Liste</button>
+        <button id="nb-add" class="nb" onclick="_navGo('add','ev')">Ajouter</button>
+      </div>
+    </div>
+    <div class="nav-group">
+      <button class="nb nav-group-btn" id="ng-fin" onclick="_toggleNavGroup('fin')">Finances &#9662;</button>
+      <div class="nav-dropdown" id="nd-fin">
+        <button id="nb-fonds" class="nb" onclick="_navGo('fonds','fin')">Fond commun</button>
+        <button id="nb-history" class="nb" onclick="_navGo('history','fin')">Historique</button>
+        <button id="nb-ex" class="nb" onclick="_navGo('ex','fin')">Exporter</button>
+      </div>
+    </div>
+    <div class="nav-group admin-only">
+      <button class="nb nav-group-btn" id="ng-adm" onclick="_toggleNavGroup('adm')">Admin &#9662;</button>
+      <div class="nav-dropdown" id="nd-adm">
+        <button id="nb-users" class="nb" onclick="_navGo('users','adm')">Gestion admins</button>
+      </div>
+    </div>
+    <button class="hamburger" id="hamburger-btn" onclick="_toggleHamburger()" aria-label="Menu">&#9776;</button>
     <div class="user-info" id="user-email"></div>
-    <button class="btn br2" style="margin-left:8px;padding:5px 10px;font-size:.7rem" onclick="doLogout()">Deconnexion</button>
+    <button class="btn br2" style="margin-left:8px;padding:5px 10px;font-size:.7rem" onclick="doLogout">Deconnexion</button>
   </nav>
+  <div id="mobile-menu" class="mobile-menu">
+    <div class="mobile-section">VUE</div>
+    <button class="nb mobile-nb" onclick="_navGoMobile('dash')">Dashboard</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('graphs')">Graphiques</button>
+    <div class="mobile-section">EVENEMENTS</div>
+    <button class="nb mobile-nb" onclick="_navGoMobile('ev-list')">Liste des evenements</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('add')">Ajouter un evenement</button>
+    <div class="mobile-section">FINANCES</div>
+    <button class="nb mobile-nb" onclick="_navGoMobile('fonds')">Fond commun</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('history')">Historique</button>
+    <button class="nb mobile-nb" onclick="_navGoMobile('ex')">Exporter</button>
+    <div class="mobile-section admin-only">ADMIN</div>
+    <button class="nb mobile-nb admin-only" onclick="_navGoMobile('users')">Gestion admins</button>
+  </div>
 </header>
 
 <div class="wrap">
@@ -163,7 +217,22 @@ tr:hover td{background:rgba(255,255,255,.02)}
 </div>
 
 <div id="pg-ev-list" class="pg">
-  <div class="card"><div class="ct">Choisissez un evenement</div><div id="ev-list-wrap"></div></div>
+  <div class="card">
+    <div class="ct">Choisissez un evenement</div>
+    <div class="fb" style="margin-bottom:14px;gap:8px;flex-wrap:wrap">
+      <input id="ev-search" placeholder="🔍 Rechercher par nom ou lieu..." style="flex:1;min-width:180px" oninput="_rEvList()">
+      <div><lbl>Date debut</lbl><input id="ev-filter-date-from" type="date" style="width:150px" onchange="_rEvList()"></div>
+      <div><lbl>Date fin</lbl><input id="ev-filter-date-to" type="date" style="width:150px" onchange="_rEvList()"></div>
+      <select id="ev-filter-profit" style="min-width:140px" onchange="_rEvList()">
+        <option value="">Tous les profits</option>
+        <option value="pos">Profit positif</option>
+        <option value="neg">Profit negatif</option>
+      </select>
+      <button class="btn bo" style="font-size:.72rem" onclick="_resetEvFilters()">Reinitialiser</button>
+    </div>
+    <div id="ev-filter-count" style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
+    <div id="ev-list-wrap"></div>
+  </div>
 </div>
 
 <div id="pg-ev-detail" class="pg"></div>
@@ -198,34 +267,6 @@ tr:hover td{background:rgba(255,255,255,.02)}
     </div>
     <button class="btn bw" style="margin-top:14px" onclick="addEvent()">+ Creer evenement</button>
   </div>
-  <div class="card"><div class="ct">Nouvelle depense</div>
-    <div class="frow">
-      <div><lbl>Evenement</lbl><select id="exp-ev"><option value="">-- Choisir --</option></select></div>
-      <div><lbl>Categorie</lbl><select id="exp-ca"><option>Lieu</option><option>Commissions</option><option>Salaires</option><option>DJ</option><option>Contenu/Video</option><option>Marketing</option><option>Accessoires</option><option>Materiel</option><option>Transport</option><option>Nourriture</option><option>Fonds commun</option><option>Autre</option></select></div>
-      <div><lbl>Description</lbl><input id="exp-de" placeholder="Ex: Location salle"></div>
-      <div><lbl>Montant ($)</lbl><input id="exp-am" type="number" step="0.01"></div>
-    </div>
-    <div class="frow">
-      <div><lbl>Paye par</lbl><select id="exp-pb"><option>LP Cote</option><option>LP Viens</option><option>Vincent</option><option>Fonds commun</option></select></div>
-      <div><lbl>Statut</lbl><select id="exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>
-      <div><lbl>Remboursable</lbl><select id="exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>
-      <div><lbl>Notes</lbl><input id="exp-no" placeholder="Optionnel"></div>
-    </div>
-    <button class="btn bw" onclick="addExpense()">+ Ajouter depense</button>
-  </div>
-  <div class="card"><div class="ct">Nouveau revenu</div>
-    <div class="frow">
-      <div><lbl>Evenement</lbl><select id="rev-ev"><option value="">-- Choisir --</option></select></div>
-      <div><lbl>Categorie</lbl><select id="rev-ca"><option>Billets en ligne</option><option>Vente porte</option><option>Cash porte</option><option>Remboursement salle</option><option>Virements</option><option>Commandite</option><option>Autre</option></select></div>
-      <div><lbl>Description</lbl><input id="rev-de" placeholder="Ex: Vente Stripe"></div>
-      <div><lbl>Montant ($)</lbl><input id="rev-am" type="number" step="0.01"></div>
-    </div>
-    <div class="frow">
-      <div><lbl>Statut</lbl><select id="rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>
-      <div><lbl>Notes</lbl><input id="rev-no" placeholder="Optionnel"></div>
-    </div>
-    <button class="btn bg2" onclick="addRevenue()">+ Ajouter revenu</button>
-  </div>
 </div>
 
 <div id="pg-graphs" class="pg">
@@ -240,8 +281,34 @@ tr:hover td{background:rgba(255,255,255,.02)}
   </div>
 </div>
 
+<div id="pg-fonds" class="pg">
+  <div class="grid" id="fonds-stats"></div>
+  <div class="card">
+    <div class="ct">Historique du fond commun</div>
+    <table>
+      <thead><tr><th>Evenement</th><th>Type</th><th>Description</th><th>Montant</th><th>Date</th></tr></thead>
+      <tbody id="fonds-tb"><tr><td colspan="5" class="empty">Chargement...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
 <div id="pg-history" class="pg">
-  <div class="card"><div class="ct">Dernieres actions</div>
+  <div class="card">
+    <div class="ct">Dernieres actions</div>
+    <div class="fb" style="margin-bottom:14px;gap:8px;flex-wrap:wrap">
+      <input id="hist-search" placeholder="🔍 Rechercher action, evenement, par..." style="flex:1;min-width:200px" oninput="_rHistory()">
+      <select id="hist-filter-type" style="min-width:160px" onchange="_rHistory()">
+        <option value="">Toutes les actions</option>
+        <option value="ajoute">Ajouts</option>
+        <option value="modifie">Modifications</option>
+        <option value="supprime">Suppressions</option>
+      </select>
+      <select id="hist-filter-ev" id="hist-filter-ev" style="min-width:160px" onchange="_rHistory()">
+        <option value="">Tous les evenements</option>
+      </select>
+      <button class="btn bo" style="font-size:.72rem" onclick="_resetHistFilters()">Reinitialiser</button>
+    </div>
+    <div id="hist-filter-count" style="font-size:.72rem;color:var(--muted);margin-bottom:10px"></div>
     <table><thead><tr><th>Date</th><th>Action</th><th>Evenement</th><th>Detail</th><th>Montant</th><th>Par</th></tr></thead>
     <tbody id="history-tb"><tr><td colspan="6" class="empty">Chargement...</td></tr></tbody></table>
   </div>
@@ -271,10 +338,27 @@ tr:hover td{background:rgba(255,255,255,.02)}
       <tr><td>Voir dashboard et evenements</td><td class="g">✓</td><td class="g">✓</td><td class="g">✓</td></tr>
       <tr><td>Ajouter depenses et revenus</td><td class="r">✗</td><td class="g">✓</td><td class="g">✓</td></tr>
       <tr><td>Creer des evenements</td><td class="r">✗</td><td class="g">✓</td><td class="g">✓</td></tr>
+      <tr><td>Modifier les details d'un evenement</td><td class="r">✗</td><td class="g">✓</td><td class="g">✓</td></tr>
+      <tr><td>Modifier les depenses et revenus</td><td class="r">✗</td><td class="r">✗</td><td class="g">✓</td></tr>
       <tr><td>Supprimer des entrees</td><td class="r">✗</td><td class="r">✗</td><td class="g">✓</td></tr>
+      <tr><td>Modifier config actionnaires / fonds</td><td class="r">✗</td><td class="r">✗</td><td class="g">✓</td></tr>
       <tr><td>Gerer les utilisateurs</td><td class="r">✗</td><td class="r">✗</td><td class="g">✓</td></tr>
       <tr><td>Exporter PDF et Excel</td><td class="g">✓</td><td class="g">✓</td><td class="g">✓</td></tr>
     </tbody></table>
+  </div>
+  <div class="card"><div class="ct">Categories — Depenses</div>
+    <div id="cats-exp-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="new-exp-cat" placeholder="Nouvelle categorie..." style="max-width:220px;margin:0">
+      <button class="btn bw" onclick="addCat('exp')">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="card"><div class="ct">Categories — Revenus</div>
+    <div id="cats-rev-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <input id="new-rev-cat" placeholder="Nouvelle categorie..." style="max-width:220px;margin:0">
+      <button class="btn bg2" onclick="addCat('rev')">+ Ajouter</button>
+    </div>
   </div>
 </div>
 
@@ -320,6 +404,17 @@ tr:hover td{background:rgba(255,255,255,.02)}
 // FIREBASE INIT
 // ============================================================
 var ADMIN_EMAIL = 'louispilippe2021@gmail.com';
+// ================================================================
+// CONFIGURATION FIREBASE
+// ================================================================
+// NOTE DE SÉCURITÉ: Cette clé API est visible côté client.
+// C'est normal pour Firebase, MAIS vous devez absolument:
+//   1. Restreindre cette clé dans Google Cloud Console:
+//      https://console.cloud.google.com/apis/credentials
+//      → Restrictions HTTP referrers → ajouter votre domaine uniquement
+//   2. Appliquer les règles Firestore (fichier firestore.rules fourni)
+//      qui empêchent tout accès non authentifié ou non autorisé.
+// ================================================================
 var FB_CONFIG = {
   apiKey: "AIzaSyBoD5b_iGOqmzt5R8VXUnjEKDk6xZsgK0c",
   authDomain: "financese-1b835.firebaseapp.com",
@@ -337,7 +432,19 @@ var auth = firebase.auth();
 // ============================================================
 var _user = null;
 var _role = 'viewer';
-var _data = { events:[], expenses:[], revenues:[], users:[] };
+
+var _data = { 
+  events:[], 
+  expenses:[], 
+  revenues:[], 
+  users:[], 
+  cats:{
+    exp:["Lieu","Commissions","Salaires","DJ","Contenu/Video","Marketing","Accessoires","Materiel","Transport","Nourriture","Autre"], 
+    rev:["Billets en ligne","Vente porte","Cash porte","Remboursement salle","Virements","Commandite","Autre"]
+  }
+};
+
+var _currentEvTab = "dep";
 var _unsub = [];
 var _charts = {};
 
@@ -386,14 +493,38 @@ function _getEvConfig(eid) {
 
 function _split(eid) {
   var r = _sumRev(eid), d = _sumExp(eid), pr = r - d;
-  var cfg = eid ? _getEvConfig(eid) : { fcOn:true, fcPct:10, shareholders:[{name:'Vincent',pct:18},{name:'LP Cote',pct:41},{name:'LP Viens',pct:41}] };
+  var cfg = eid ? _getEvConfig(eid) : { fcOn:true, fcPct:10, shareholders:[{name:'Vincent',pct:7},{name:'LP Cote',pct:46.5},{name:'LP Viens',pct:46.5}] };
   var fo = (cfg.fcOn && pr > 0) ? pr * (cfg.fcPct / 100) : 0;
-  var pa = Math.max(pr - fo, 0);
+
+  // Vincent transaction fee reimbursement: (0.75% x prix + 0.40) x billets en ligne
+  var vincFee = 0, vincNbTickets = 0, vincPrixBillet = 0, vincBasePct = 0;
+  var ev = null;
+  if (eid) {
+    for (var i = 0; i < _data.events.length; i++) if (_data.events[i].id == eid) { ev = _data.events[i]; break; }
+    if (ev) {
+      var prix = Number(ev.prix) || 0;
+      vincPrixBillet = prix;
+      var billetsRevs = _data.revenues.filter(function(rv) {
+        return rv.eventId == eid && rv.cat === 'Billets en ligne' && rv.status === 'recu';
+      });
+      var nbBillets = billetsRevs.reduce(function(acc, rv) { return acc + (Number(rv.amount) || 0); }, 0);
+      if (prix > 0 && nbBillets > 0) {
+        vincNbTickets = Math.round(nbBillets / prix);
+        vincFee = (0.0075 * prix + 0.40) * vincNbTickets;
+      }
+    }
+  }
+
+  var pa = Math.max(pr - fo - vincFee, 0);
   var shares = {};
   if (cfg.shareholders) {
-    cfg.shareholders.forEach(function(s) { shares[s.name] = pa * (s.pct / 100); });
+    cfg.shareholders.forEach(function(s) {
+      var base = pa * (s.pct / 100);
+      if (s.name === 'Vincent') vincBasePct = base;
+      shares[s.name] = s.name === 'Vincent' ? base + vincFee : base;
+    });
   }
-  return { rev:r, dep:d, profit:pr, fonds:fo, apart:pa, shares:shares, cfg:cfg };
+  return { rev:r, dep:d, profit:pr, fonds:fo, apart:pa, vincFee:vincFee, vincNbTickets:vincNbTickets, vincPrixBillet:vincPrixBillet, shares:shares, cfg:cfg };
 }
 
 // ============================================================
@@ -440,11 +571,19 @@ function doLogout() {
 // ============================================================
 // AUTH STATE
 // ============================================================
+// Timeout fallback: if Firebase Auth doesn't respond in 8s, show login
+var _authTimeout = setTimeout(function() {
+  hideLoading();
+  showLogin();
+}, 8000);
+showLoading('Connexion...');
+
 auth.onAuthStateChanged(function(user) {
+  clearTimeout(_authTimeout);
   if (!user) {
     _user = null; _role = 'viewer';
     _unsub.forEach(function(u) { try { u(); } catch(e) {} });
-    _unsub = []; _data = { events:[], expenses:[], revenues:[], users:[] };
+    _unsub = []; _data = { events:[], expenses:[], revenues:[], users:[], cats:{ exp:['Lieu','Commissions','Salaires','DJ','Contenu/Video','Marketing','Accessoires','Materiel','Transport','Nourriture','Autre'], rev:['Billets en ligne','Vente porte','Cash porte','Remboursement salle','Virements','Commandite','Autre'] } };
     showLogin(); return;
   }
   _user = user;
@@ -507,6 +646,15 @@ function _initListeners() {
       _data.users = [];
       s.forEach(function(d) { _data.users.push(Object.assign({ uid:d.id }, d.data())); });
       _rUsers();
+    }),
+    db.collection('config').doc('categories').onSnapshot(function(doc) {
+      if (doc.exists) {
+        var d = doc.data();
+        if (d.exp && d.exp.length) _data.cats.exp = d.exp;
+        if (d.rev && d.rev.length) _data.cats.rev = d.rev;
+      }
+      _rCats();
+      _fillCatSelects();
     })
   );
 }
@@ -518,7 +666,7 @@ function _initListeners() {
 var _shRows = [];
 
 function _initShareholderForm() {
-  _shRows = [{name:'Vincent',pct:18},{name:'LP Cote',pct:41},{name:'LP Viens',pct:41}];
+  _shRows = [{name:'Vincent',pct:7},{name:'LP Cote',pct:46.5},{name:'LP Viens',pct:46.5}];
   _renderShForm();
 }
 
@@ -659,36 +807,99 @@ function logHistory(action, eventId, detail, amount, detailObj) {
 function openHistModal(jsonStr) {
   try {
     var obj = JSON.parse(decodeURIComponent(jsonStr));
-    var html = '<table style="width:100%;border-collapse:collapse;font-size:.84rem">';
-    Object.keys(obj).forEach(function(k) {
-      var val = obj[k];
-      if (typeof val === 'object' && val !== null) val = JSON.stringify(val, null, 2);
-      html += '<tr style="border-bottom:1px solid var(--border)">'
-        + '<td style="padding:8px 10px 8px 0;color:var(--muted);white-space:nowrap;vertical-align:top">'+k+'</td>'
-        + '<td style="padding:8px 0;word-break:break-word">'+val+'</td></tr>';
-    });
-    html += '</table>';
+    var html = '';
+    if (obj.__diff && obj.before && obj.after) {
+      // Diff mode: show before/after comparison
+      html = '<table style="width:100%;border-collapse:collapse;font-size:.84rem">';
+      html += '<thead><tr>'
+        + '<th style="padding:6px 10px 6px 0;color:var(--text);font-size:.76rem;font-weight:700;border-bottom:1px solid var(--border);text-align:left">Champ</th>'
+        + '<th style="padding:6px 10px;color:var(--text);font-size:.76rem;font-weight:700;border-bottom:1px solid var(--border);text-align:left">Avant</th>'
+        + '<th style="padding:6px 0;color:var(--text);font-size:.76rem;font-weight:700;border-bottom:1px solid var(--border);text-align:left">Apres</th>'
+        + '</tr></thead><tbody>';
+      Object.keys(obj.before).forEach(function(k) {
+        var bv = String(obj.before[k] || '—');
+        var av = String(obj.after[k] || '—');
+        var changed = bv !== av;
+        var rowStyle = changed ? 'background:rgba(251,191,36,.06)' : '';
+        var bvHtml = changed ? '<span class="diff-changed">'+bv+'</span>' : '<span class="diff-unchanged">'+bv+'</span>';
+        var avHtml = changed ? '<span class="diff-changed">'+av+'</span>' : '<span class="diff-unchanged">'+av+'</span>';
+        html += '<tr style="border-bottom:1px solid var(--border);'+rowStyle+'">'
+          + '<td style="padding:8px 10px 8px 0;color:var(--muted);white-space:nowrap;vertical-align:top;font-size:.78rem">'+(changed?'<b style=\"color:var(--yellow)\">'+k+'</b>':k)+'</td>'
+          + '<td style="padding:8px 10px;word-break:break-word">'+bvHtml+'</td>'
+          + '<td style="padding:8px 0;word-break:break-word">'+avHtml+'</td>'
+          + '</tr>';
+      });
+      html += '</tbody></table>';
+    } else {
+      html = '<table style="width:100%;border-collapse:collapse;font-size:.84rem">';
+      Object.keys(obj).forEach(function(k) {
+        var val = obj[k];
+        if (typeof val === 'object' && val !== null) val = JSON.stringify(val, null, 2);
+        html += '<tr style="border-bottom:1px solid var(--border)">'
+          + '<td style="padding:8px 10px 8px 0;color:var(--muted);white-space:nowrap;vertical-align:top">'+k+'</td>'
+          + '<td style="padding:8px 0;word-break:break-word">'+val+'</td></tr>';
+      });
+      html += '</table>';
+    }
     _g('hist-modal-body').innerHTML = html;
     _g('hist-modal').style.display = 'flex';
-  } catch(e) { alert('Erreur lecture détail'); }
+  } catch(e) { alert('Erreur lecture detail'); }
 }
 
 function closeHistModal() { _g('hist-modal').style.display='none'; }
 
+function _resetHistFilters() {
+  ['hist-search','hist-filter-type','hist-filter-ev'].forEach(function(id){ var el=_g(id); if(el) el.value=''; });
+  _rHistory();
+}
+
+function _fillHistEvSelect(rows) {
+  var sel = _g('hist-filter-ev'); if (!sel) return;
+  var current = sel.value;
+  var evIds = {};
+  rows.forEach(function(r){ if(r.eventId) evIds[r.eventId] = _evName(r.eventId); });
+  var opts = '<option value="">Tous les evenements</option>';
+  Object.keys(evIds).forEach(function(id){ opts += '<option value="'+id+'"'+(current===id?' selected':'')+'>'+evIds[id]+'</option>'; });
+  sel.innerHTML = opts;
+}
+
 function _rHistory() {
   var tb = _g('history-tb'); if (!tb) return;
   tb.innerHTML = '<tr><td colspan="6" class="empty">Chargement...</td></tr>';
-  db.collection('history').orderBy('createdAt','desc').limit(60).get().then(function(snap) {
+  db.collection('history').orderBy('createdAt','desc').limit(200).get().then(function(snap) {
     if (snap.empty) { tb.innerHTML = '<tr><td colspan="6" class="empty">Aucune action</td></tr>'; return; }
+    var allRows = [];
+    snap.forEach(function(d) { allRows.push(Object.assign({ _id: d.id }, d.data())); });
+
+    _fillHistEvSelect(allRows);
+
+    var search = (_g('hist-search') ? _g('hist-search').value.trim().toLowerCase() : '');
+    var typeFilter = (_g('hist-filter-type') ? _g('hist-filter-type').value : '');
+    var evFilter = (_g('hist-filter-ev') ? _g('hist-filter-ev').value : '');
+
+    var filtered = allRows.filter(function(r) {
+      if (typeFilter && (r.action||'').toLowerCase().indexOf(typeFilter) === -1) return false;
+      if (evFilter && r.eventId !== evFilter) return false;
+      if (search) {
+        var haystack = ((r.action||'') + ' ' + _evName(r.eventId) + ' ' + (r.by||'') + ' ' + (r.detail||'')).toLowerCase();
+        if (haystack.indexOf(search) === -1) return false;
+      }
+      return true;
+    });
+
+    var countEl = _g('hist-filter-count');
+    if (countEl) countEl.textContent = filtered.length < allRows.length ? (filtered.length + ' / ' + allRows.length + ' actions') : allRows.length + ' action' + (allRows.length > 1 ? 's' : '');
+
+    if (!filtered.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Aucun resultat</td></tr>'; return; }
+
     var h = '';
-    snap.forEach(function(d) {
-      var r = d.data();
+    filtered.forEach(function(r) {
       var dt = r.createdAt ? new Date(r.createdAt.toDate()).toLocaleString('fr-CA') : '-';
       var bc = r.action.indexOf('supprime') > -1 ? 'jr' : r.action.indexOf('ajoute') > -1 ? 'jg' : 'jw';
       var detailCell = '-';
       if (r.detailObj) {
         var enc = encodeURIComponent(JSON.stringify(r.detailObj));
-        detailCell = '<button class="btn bo" style="padding:2px 8px;font-size:.7rem" onclick="openHistModal(\''+enc+'\')">Voir détails</button>';
+        detailCell = '<button class="btn bo" style="padding:2px 8px;font-size:.7rem" onclick="openHistModal(\'' + enc + '\')">Voir details</button>';
       } else if (r.detail) {
         detailCell = '<span style="max-width:140px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle" title="'+r.detail+'">'+r.detail+'</span>';
       }
@@ -766,17 +977,37 @@ function _rCharts() {
 // ============================================================
 // NAVIGATION
 // ============================================================
+// Map page -> nav group
+var _pageGroup = {
+  'dash':'vue','graphs':'vue',
+  'ev-list':'ev','add':'ev',
+  'fonds':'fin','history':'fin','ex':'fin',
+  'users':'adm'
+};
+
 function showPage(id) {
   if (id !== 'ev-detail') _currentEid = null;
   document.querySelectorAll('.pg').forEach(function(el) { el.classList.remove('on'); });
   document.querySelectorAll('.nb').forEach(function(el) { el.classList.remove('on'); });
+  document.querySelectorAll('.mobile-nb').forEach(function(el) { el.classList.remove('on'); });
+  document.querySelectorAll('.nav-group-btn').forEach(function(el) { el.classList.remove('active'); });
   var pg = _g('pg-' + id); if (pg) pg.classList.add('on');
   var nb = _g('nb-' + id); if (nb) nb.classList.add('on');
+  // Highlight mobile button
+  var mnb = document.querySelector('.mobile-nb[onclick*="' + id + '"]');
+  if (mnb) mnb.classList.add('on');
+  // Highlight group button
+  var grp = _pageGroup[id];
+  if (grp) { var gb = _g('ng-' + grp); if(gb) gb.classList.add('active'); }
   if (id === 'graphs') setTimeout(_rCharts, 80);
   if (id === 'history') _rHistory();
+  if (id === 'fonds') _rFonds();
+  if (id === 'users') _rCats();
 }
 
 function showTab(tabId, groupId) {
+  if (groupId === "ev-tabs") _currentEvTab = tabId;
+
   var g = _g(groupId); if (!g) return;
   g.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('on'); });
   g.querySelectorAll('.tab').forEach(function(el) { el.classList.remove('on'); });
@@ -808,7 +1039,13 @@ function _fillSels() {
 function addEvent() {
   if (_role === 'viewer') { toast('Permission refusee', 'error'); return; }
   var nm = _g('ev-n').value.trim();
-  if (!nm) { alert('Entrez un nom'); return; }
+  if (!nm) { toast('Le nom est obligatoire.', 'error'); return; }
+  var dateVal = _g('ev-d').value;
+  if (!dateVal) { toast('La date est obligatoire.', 'error'); return; }
+  var prixVal = Number(_g('ev-p').value);
+  if (isNaN(prixVal) || prixVal < 0) { toast('Le prix du billet doit etre 0 ou plus.', 'error'); return; }
+  var objVal = _g('ev-obj').value;
+  if (objVal !== '' && (isNaN(Number(objVal)) || Number(objVal) < 0 || !Number.isInteger(Number(objVal)))) { toast('Objectif: nombre entier positif requis.', 'error'); return; }
   // Sync shareholder names from DOM inputs before saving
   var shInputs = document.querySelectorAll('#shareholders-form .modal-row');
   var shFinal = [];
@@ -818,7 +1055,7 @@ function addEvent() {
   }
   var shTotal = shFinal.reduce(function(a,s){return a+s.pct;},0);
   if(shFinal.length && Math.abs(shTotal-100) > 0.1){ toast('Total actionnaires doit etre 100%','error'); return; }
-  if(!shFinal.length) shFinal = [{name:'Vincent',pct:18},{name:'LP Cote',pct:41},{name:'LP Viens',pct:41}];
+  if(!shFinal.length) shFinal = [{name:'Vincent',pct:7},{name:'LP Cote',pct:46.5},{name:'LP Viens',pct:46.5}];
   var fcOn2 = _g('ev-fc-on').value === '1';
   var fcPct2 = Number(_g('ev-fc-pct').value)||10;
   db.collection('events').add({
@@ -880,6 +1117,47 @@ function addExpense() {
     ['exp-de','exp-am','exp-no'].forEach(function(id){_g(id).value='';});
     toast('Depense ajoutee!','success');
     logHistory('Depense ajoutee', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Fournisseur': _g('exp-sup').value||'-', 'Statut': _g('exp-status').value });
+  }).catch(function(e) { alert('Erreur: '+e.message); });
+}
+
+function addExpenseInline() {
+  if (_role === 'viewer') { toast('Permission refusee','error'); return; }
+  var eid = _currentEid;
+  if (!eid) { toast('Aucun evenement selectionne','error'); return; }
+  var amt = _g('ev-exp-am').value;
+  var amtNum = Number(amt);
+  if (!amt || isNaN(amtNum) || amtNum <= 0) { toast('Le montant doit etre un nombre positif.', 'error'); return; }
+  if (amtNum > 100000) { toast('Montant trop eleve (max 100 000 $).', 'error'); return; }
+  var cat = _g('ev-exp-ca').value, desc = _g('ev-exp-de').value.trim();
+  if (!desc) { toast('La description de la depense est obligatoire.', 'error'); return; }
+  db.collection('expenses').add({
+    eventId:eid, cat:cat, desc:desc, amount:Number(amt),
+    paidBy:_g('ev-exp-pb').value, status:_g('ev-exp-st').value,
+    refund:_g('ev-exp-rf').value, notes:_g('ev-exp-no').value,
+    addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    toast('Depense ajoutee!','success');
+    logHistory('Depense ajoutee', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Paye par': _g('ev-exp-pb').value, 'Statut': _g('ev-exp-st').value });
+  }).catch(function(e) { alert('Erreur: '+e.message); });
+}
+
+function addRevenueInline() {
+  if (_role === 'viewer') { toast('Permission refusee','error'); return; }
+  var eid = _currentEid;
+  if (!eid) { toast('Aucun evenement selectionne','error'); return; }
+  var amt = _g('ev-rev-am').value;
+  var amtNum = Number(amt);
+  if (!amt || isNaN(amtNum) || amtNum <= 0) { toast('Le montant doit etre un nombre positif.', 'error'); return; }
+  if (amtNum > 100000) { toast('Montant trop eleve (max 100 000 $).', 'error'); return; }
+  var cat = _g('ev-rev-ca').value, desc = _g('ev-rev-de').value.trim();
+  if (!desc) { toast('La description du revenu est obligatoire.', 'error'); return; }
+  db.collection('revenues').add({
+    eventId:eid, cat:cat, desc:desc, amount:Number(amt),
+    status:_g('ev-rev-st').value, notes:_g('ev-rev-no').value,
+    addedBy:_user.email, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(function() {
+    toast('Revenu ajoute!','success');
+    logHistory('Revenu ajoute', eid, cat+' — '+desc, Number(amt), { 'Categorie': cat, 'Description': desc, 'Montant': _m(Number(amt)), 'Statut': _g('ev-rev-st').value });
   }).catch(function(e) { alert('Erreur: '+e.message); });
 }
 
@@ -957,53 +1235,336 @@ function openEvent(eid) {
     splitCards.push('<div class="spb"><div class="sn">Fonds commun</div><div class="sa y">'+_m(sp.fonds)+'</div><div class="sc">'+sp.cfg.fcPct+'%</div></div>');
   }
   (sp.cfg.shareholders||[]).forEach(function(s,i){
-    var col = colors[(i+1)%colors.length]||'w';
-    var amt = sp.apart*(s.pct/100);
-    splitCards.push('<div class="spb"><div class="sn">'+s.name+'</div><div class="sa '+col+'">'+_m(amt)+'</div><div class="sc">'+s.pct+'%</div></div>');
+    var col = 'w';
+    var amt = sp.shares[s.name] !== undefined ? sp.shares[s.name] : sp.apart*(s.pct/100);
+    var extra = '';
+    var detailBtn = '';
+    if (s.name === 'Vincent' && sp.vincFee > 0) {
+      extra = '<div class="sc" style="color:var(--yellow)">'+sp.vincNbTickets+' billets · '+_m(sp.vincFee)+' frais</div>';
+      var vincObj = {};
+      vincObj['7% du partage'] = _m(sp.shares['Vincent'] - sp.vincFee);
+      vincObj['Frais de transaction ((' + sp.vincPrixBillet + ' x 0.0075 + 0.40$) x ' + sp.vincNbTickets + ' billets)'] = _m(sp.vincFee);
+      vincObj['Total Vincent'] = _m(sp.shares['Vincent']);
+      var vincData = encodeURIComponent(JSON.stringify(vincObj));
+      detailBtn = '<button class="btn by2" style="padding:2px 8px;font-size:.68rem;margin-top:6px" onclick="openHistModal(\''+vincData+'\')" >Détails</button>';
+    } else {
+      extra = '<div class="sc">'+s.pct+'%</div>';
+    }
+    splitCards.push('<div class="spb"><div class="sn">'+s.name+'</div><div class="sa '+col+'">'+_m(amt)+'</div>'+extra+detailBtn+'</div>');
   });
   var splitHTML = splitCards.join('');
 
   var expRows = exps.length ? exps.map(function(e) {
     var bc = e.status=='paye'?'jg':'jy', sl = e.status=='paye'?'Paye':'En attente';
-    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem" onclick="delExpense(\''+e.id+'\',\''+eid+'\')">✕</button>' : '';
-    return '<tr><td><span class="bj jw">'+e.cat+'</span></td><td>'+(e.desc||'-')+'</td><td class="r">'+_m(e.amount)+'</td><td>'+e.paidBy+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(e.refund||'-')+'</td><td>'+(e.notes||'-')+'</td><td>'+db2+'</td></tr>';
+    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem;margin-left:4px" onclick="delExpense(\''+e.id+'\',\''+eid+'\')">✕</button>' : '';
+    var eb2 = canDel ? '<button class="btn by2" style="padding:2px 7px;font-size:.7rem" onclick="openEditExpenseModal(\''+e.id+'\',\''+eid+'\')">&#9998;</button>' : '';
+    return '<tr><td><span class="bj jw">'+e.cat+'</span></td><td>'+(e.desc||'-')+'</td><td class="r">'+_m(e.amount)+'</td><td>'+e.paidBy+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(e.refund||'-')+'</td><td>'+(e.notes||'-')+'</td><td style="white-space:nowrap">'+eb2+db2+'</td></tr>';
   }).join('') : '<tr><td colspan="8" class="empty">Aucune depense</td></tr>';
 
   var revRows = revs.length ? revs.map(function(r) {
     var bc = r.status=='recu'?'jg':'jy', sl = r.status=='recu'?'Recu':'En attente';
-    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem" onclick="delRevenue(\''+r.id+'\',\''+eid+'\')">✕</button>' : '';
-    return '<tr><td><span class="bj jg">'+r.cat+'</span></td><td>'+(r.desc||'-')+'</td><td class="g">'+_m(r.amount)+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(r.notes||'-')+'</td><td>'+db2+'</td></tr>';
+    var db2 = canDel ? '<button class="btn br2" style="padding:2px 7px;font-size:.7rem;margin-left:4px" onclick="delRevenue(\''+r.id+'\',\''+eid+'\')">✕</button>' : '';
+    var eb2 = canDel ? '<button class="btn by2" style="padding:2px 7px;font-size:.7rem" onclick="openEditRevenueModal(\''+r.id+'\',\''+eid+'\')">&#9998;</button>' : '';
+    return '<tr><td><span class="bj jg">'+r.cat+'</span></td><td>'+(r.desc||'-')+'</td><td class="g">'+_m(r.amount)+'</td><td><span class="bj '+bc+'">'+sl+'</span></td><td>'+(r.notes||'-')+'</td><td style="white-space:nowrap">'+eb2+db2+'</td></tr>';
   }).join('') : '<tr><td colspan="6" class="empty">Aucun revenu</td></tr>';
 
-  var delBtn = canDel ? '<button class="btn br2" style="margin-left:auto" onclick="delEvent(\''+eid+'\')">Supprimer</button>' : '';
+  var canEdit = _role === 'admin' || _role === 'manager';
+  var editBtn = canEdit ? '<button class="btn by2" style="padding:4px 10px;font-size:.72rem;margin-left:auto" onclick="openEditEventModal(\''+eid+'\')" >&#9998; Modifier</button>' : '';
+  var delBtn = canDel ? '<button class="btn br2" style="padding:4px 10px;font-size:.72rem;margin-left:6px" onclick="delEvent(\''+eid+'\')">Supprimer</button>' : '';
+
+  var warnHTML = '';
+  if (sp.dep > sp.rev && sp.rev > 0) {
+    warnHTML = '<div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.4);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px">'
+      + '<span style="font-size:1.2rem">&#9888;</span>'
+      + '<div><div style="color:var(--red);font-weight:700;font-size:.88rem">Les depenses depassent les revenus</div>'
+      + '<div style="color:var(--muted);font-size:.78rem;margin-top:2px">Depenses: '+_m(sp.dep)+' &nbsp;·&nbsp; Revenus: '+_m(sp.rev)+' &nbsp;·&nbsp; Deficit: '+_m(sp.dep - sp.rev)+'</div>'
+      + '</div></div>';
+  } else if (sp.dep > sp.rev) {
+    warnHTML = '<div style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.4);border-radius:10px;padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px">'
+      + '<span style="font-size:1.2rem">&#9888;</span>'
+      + '<div><div style="color:var(--red);font-weight:700;font-size:.88rem">Les depenses depassent les revenus</div>'
+      + '<div style="color:var(--muted);font-size:.78rem;margin-top:2px">Depenses: '+_m(sp.dep)+' &nbsp;·&nbsp; Aucun revenu enregistre</div>'
+      + '</div></div>';
+  }
 
   var html = '<button class="back-btn" onclick="showPage(\'ev-list\')">&#8592; Retour</button>'
+    + warnHTML
     + notesHTML
     + '<div class="ev-detail-header"><div>'
     + '<div class="ev-detail-title">'+ev.name+'</div>'
     + '<div class="ev-detail-sub">'+(ev.date||'')+(ev.lieu?' &nbsp;·&nbsp; '+ev.lieu:'')+'</div>'
-    + progHTML + '</div>' + delBtn + '</div>'
-    + '<div class="grid">'
-    + '<div class="stat"><div class="sl">Revenus</div><div class="sv g">'+_m(sp.rev)+'</div></div>'
-    + '<div class="stat"><div class="sl">Depenses</div><div class="sv r">'+_m(sp.dep)+'</div></div>'
-    + '<div class="stat"><div class="sl">Profit brut</div><div class="sv '+(sp.profit>=0?'g':'r')+'">'+_m(sp.profit)+'</div></div>'
-    + '<div class="stat"><div class="sl">Fonds commun</div><div class="sv y">'+_m(sp.fonds)+'</div></div>'
-    + '<div class="stat"><div class="sl">A partager</div><div class="sv p">'+_m(sp.apart)+'</div></div>'
-    + '<div class="stat"><div class="sl">Prix billet</div><div class="sv w">'+_m(ev.prix||0)+'</div></div>'
-    + '</div>'
+    + progHTML + '</div><div style="display:flex;gap:6px;align-items:center">' + editBtn + delBtn + '</div></div>'
+    + '<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px">'    + '<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 18px">'    + '<div class="ct" style="margin-bottom:10px">Finances</div>'    + '<table style="width:100%;border-collapse:collapse">'    + '<tr><td style="padding:6px 0;font-size:.84rem;color:var(--muted)"></td><td style="padding:6px 0;font-size:.84rem;color:var(--muted)">Revenus</td><td style="padding:6px 0;font-size:.84rem;text-align:right;font-weight:600;color:#4ade80">'+_m(sp.rev)+'</td></tr>'    + '<tr><td style="padding:6px 0;font-size:.9rem;color:#f87171;width:16px">−</td><td style="padding:6px 0;font-size:.84rem;color:var(--muted)">Depenses</td><td style="padding:6px 0;font-size:.84rem;text-align:right;font-weight:600;color:#f87171">'+_m(sp.dep)+'</td></tr>'    + '<tr style="border-top:1px solid var(--border)"><td style="padding:8px 0 6px;font-size:.9rem;color:'+(sp.profit>=0?'#4ade80':'#f87171')+'">=</td><td style="padding:8px 0 6px;font-size:.84rem;font-weight:700;color:var(--text)">Profit brut</td><td style="padding:8px 0 6px;font-size:1rem;text-align:right;font-weight:800;color:'+(sp.profit>=0?'#4ade80':'#f87171')+'">'+_m(sp.profit)+'</td></tr>'    + '</table></div>'    + '<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 18px">'    + '<div class="ct" style="margin-bottom:10px">Distribution</div>'    + '<table style="width:100%;border-collapse:collapse">'    + '<tr><td style="padding:6px 0;font-size:.84rem;color:var(--muted);width:16px"></td><td style="padding:6px 0;font-size:.84rem;color:var(--muted)">Profit brut</td><td style="padding:6px 0;font-size:.84rem;text-align:right;font-weight:600;color:'+(sp.profit>=0?'#4ade80':'#f87171')+'">'+_m(sp.profit)+'</td></tr>'    + (sp.cfg.fcOn ? '<tr><td style="padding:6px 0;font-size:.9rem;color:#f87171">−</td><td style="padding:6px 0;font-size:.84rem;color:var(--muted)">Fonds commun <span style=\"font-size:.72rem\">('+sp.cfg.fcPct+'%)</span></td><td style="padding:6px 0;font-size:.84rem;text-align:right;font-weight:600;color:#fbbf24">'+_m(sp.fonds)+'</td></tr>' : '')    + (sp.vincFee > 0 ? '<tr><td style="padding:6px 0;font-size:.9rem;color:#f87171">−</td><td style="padding:6px 0;font-size:.84rem;color:var(--muted)">Frais billets Vincent</td><td style="padding:6px 0;font-size:.84rem;text-align:right;font-weight:600;color:#fbbf24">'+_m(sp.vincFee)+'</td></tr>' : '')    + '<tr style="border-top:1px solid var(--border)"><td style="padding:8px 0 6px;font-size:.9rem;color:#c084fc">=</td><td style="padding:8px 0 6px;font-size:.84rem;font-weight:700;color:var(--text)">Banque evenement</td><td style="padding:8px 0 6px;font-size:1rem;text-align:right;font-weight:800;color:#c084fc">'+_m(sp.apart)+'</td></tr>'    + '</table></div>'    + '<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px 18px">'    + '<div class="ct" style="margin-bottom:10px">Infos evenement</div>'    + '<div class="grid" style="margin:0">'    + '<div class="stat"><div class="sl">Prix billet</div><div class="sv w">'+_m(ev.prix||0)+'</div></div>'    + (ev.objectif ? '<div class="stat"><div class="sl">Objectif billets</div><div class="sv w">'+ev.objectif+'</div></div>' : '')    + '</div></div>'    + '</div>'
     + '<div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="ct" style="margin:0">Partage</div>'+(_role==='admin'?'<button class="btn by2" style="padding:4px 10px;font-size:.72rem" onclick="openEvModal(\''+eid+'\')">Modifier config</button>':'')+'</div><div class="spw">'+splitHTML+'</div></div>'
     + '<div id="ev-tabs"><div class="tab-bar">'
-    + '<button id="tb-dep" class="tab on" onclick="showTab(\'dep\',\'ev-tabs\')">Depenses ('+exps.length+')</button>'
-    + '<button id="tb-rev2" class="tab" onclick="showTab(\'rev2\',\'ev-tabs\')">Revenus ('+revs.length+')</button>'
+    + '<button id="tb-dep" class="tab ' + (_currentEvTab === 'dep' ? 'on' : '') + '" onclick="showTab(\'dep\',\'ev-tabs\')">Depenses ('+exps.length+')</button>'
+    + '<button id="tb-rev2" class="tab ' + (_currentEvTab === 'rev2' ? 'on' : '') + '" onclick="showTab(\'rev2\',\'ev-tabs\')">Revenus ('+revs.length+')</button>'
     + '</div>'
-    + '<div id="tc-dep" class="tab-content on"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table></div>'
-    + '<div id="tc-rev2" class="tab-content"><table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table></div>'
+    + '<div id="tc-dep" class="tab-content ' + (_currentEvTab === 'dep' ? 'on' : '') + '">'    + (_role!=='viewer' ? '<div class="card" style="margin-bottom:12px;padding:14px"><div class="ct">Ajouter une depense</div><div class="frow">'    + '<div><lbl>Categorie</lbl><select id="ev-exp-ca"></select></div>'    + '<div><lbl>Description</lbl><input id="ev-exp-de" placeholder="Ex: Location salle"></div>'    + '<div><lbl>Montant ($)</lbl><input id="ev-exp-am" type="number" step="0.01"></div>'    + '<div><lbl>Paye par</lbl><select id="ev-exp-pb"><option>LP Cote</option><option>LP Viens</option><option>Vincent</option><option>Fonds commun</option><option>Banque evenement</option></select></div>'    + '</div><div class="frow">'    + '<div><lbl>Statut</lbl><select id="ev-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>'    + '<div><lbl>Remboursable</lbl><select id="ev-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>'    + '<div><lbl>Notes</lbl><input id="ev-exp-no" placeholder="Optionnel"></div>'    + '</div><button class="btn bw" onclick="addExpenseInline()">+ Ajouter depense</button></div>' : '')    + '<table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Paye par</th><th>Statut</th><th>Remb.</th><th>Notes</th><th></th></tr></thead><tbody>'+expRows+'</tbody></table></div>'
+    + '<div id="tc-rev2" class="tab-content ' + (_currentEvTab === 'rev2' ? 'on' : '') + '">'    + (_role!=='viewer' ? '<div class="card" style="margin-bottom:12px;padding:14px"><div class="ct">Ajouter un revenu</div><div class="frow">'    + '<div><lbl>Categorie</lbl><select id="ev-rev-ca"></select></div>'    + '<div><lbl>Description</lbl><input id="ev-rev-de" placeholder="Ex: Vente Stripe"></div>'    + '<div><lbl>Montant ($)</lbl><input id="ev-rev-am" type="number" step="0.01"></div>'    + '</div><div class="frow">'    + '<div><lbl>Statut</lbl><select id="ev-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>'    + '<div><lbl>Notes</lbl><input id="ev-rev-no" placeholder="Optionnel"></div>'    + '</div><button class="btn bg2" onclick="addRevenueInline()">+ Ajouter revenu</button></div>' : '')    + '<table><thead><tr><th>Cat.</th><th>Desc.</th><th>Montant</th><th>Statut</th><th>Notes</th><th></th></tr></thead><tbody>'+revRows+'</tbody></table></div>'
     + '</div>';
 
   document.querySelectorAll('.pg').forEach(function(el) { el.classList.remove('on'); });
   document.querySelectorAll('.nb').forEach(function(el) { el.classList.remove('on'); });
   var det = _g('pg-ev-detail');
-  if (det) { det.innerHTML = html; det.classList.add('on'); }
+  if (det) { det.innerHTML = html; det.classList.add('on'); _fillCatSelects(); }
+}
+
+
+// ============================================================
+// EDIT FUNCTIONS
+// ============================================================
+var _editExpId = null, _editRevId = null, _editEvId = null;
+
+function openEditEventModal(eid) {
+  if (_role !== 'admin' && _role !== 'manager') { toast('Permission refusee','error'); return; }
+  _editEvId = eid;
+  var ev = null;
+  for (var i = 0; i < _data.events.length; i++) if (_data.events[i].id == eid) { ev = _data.events[i]; break; }
+  if (!ev) return;
+  _g('eem-name').value = ev.name || '';
+  _g('eem-date').value = ev.date || '';
+  _g('eem-lieu').value = ev.lieu || '';
+  _g('eem-prix').value = ev.prix || '';
+  _g('eem-obj').value = ev.objectif || '';
+  _g('eem-notes').value = ev.notes || '';
+  _g('edit-event-modal').style.display = 'flex';
+}
+
+function closeEditEventModal() { _g('edit-event-modal').style.display = 'none'; _editEvId = null; }
+
+function saveEditEvent() {
+  if (!_editEvId) return;
+  var ev = null;
+  for (var i = 0; i < _data.events.length; i++) if (_data.events[i].id == _editEvId) { ev = _data.events[i]; break; }
+  if (!ev) return;
+  var before = { Nom: ev.name||'', Date: ev.date||'', Lieu: ev.lieu||'', 'Prix billet': ev.prix||'', 'Objectif billets': ev.objectif||'', Notes: ev.notes||'' };
+  var after = {
+    Nom: _g('eem-name').value,
+    Date: _g('eem-date').value,
+    Lieu: _g('eem-lieu').value,
+    'Prix billet': _g('eem-prix').value,
+    'Objectif billets': _g('eem-obj').value,
+    Notes: _g('eem-notes').value
+  };
+  db.collection('events').doc(_editEvId).update({
+    name: after.Nom, date: after.Date, lieu: after.Lieu,
+    prix: Number(after['Prix billet']) || 0,
+    objectif: Number(after['Objectif billets']) || 0,
+    notes: after.Notes
+  }).then(function() {
+    toast('Evenement modifie!', 'success');
+    logHistory('Evenement modifie', _editEvId, after.Nom, 0, { __diff: true, before: before, after: after });
+    closeEditEventModal();
+  }).catch(function(e) { alert('Erreur: ' + e.message); });
+}
+
+function openEditExpenseModal(expId, eid) {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  _editExpId = expId; _editEvId = eid;
+  var exp = _data.expenses.filter(function(e){ return e.id === expId; })[0];
+  if (!exp) return;
+  _g('eem-exp-ca').value = exp.cat || '';
+  _g('eem-exp-de').value = exp.desc || '';
+  _g('eem-exp-am').value = exp.amount || '';
+  _g('eem-exp-pb').value = exp.paidBy || '';
+  _g('eem-exp-st').value = exp.status || 'paye';
+  _g('eem-exp-rf').value = exp.refund || 'non';
+  _g('eem-exp-no').value = exp.notes || '';
+  _g('edit-expense-modal').style.display = 'flex';
+}
+
+function closeEditExpenseModal() { _g('edit-expense-modal').style.display = 'none'; _editExpId = null; }
+
+function saveEditExpense() {
+  if (!_editExpId) return;
+  var exp = _data.expenses.filter(function(e){ return e.id === _editExpId; })[0];
+  if (!exp) return;
+  var before = { Categorie: exp.cat||'', Description: exp.desc||'', Montant: _m(exp.amount||0), 'Paye par': exp.paidBy||'', Statut: exp.status||'', Remboursable: exp.refund||'', Notes: exp.notes||'' };
+  var after = {
+    Categorie: _g('eem-exp-ca').value,
+    Description: _g('eem-exp-de').value,
+    Montant: _m(Number(_g('eem-exp-am').value)||0),
+    'Paye par': _g('eem-exp-pb').value,
+    Statut: _g('eem-exp-st').value,
+    Remboursable: _g('eem-exp-rf').value,
+    Notes: _g('eem-exp-no').value
+  };
+  db.collection('expenses').doc(_editExpId).update({
+    cat: after.Categorie, desc: after.Description,
+    amount: Number(_g('eem-exp-am').value) || 0,
+    paidBy: after['Paye par'], status: after.Statut,
+    refund: after.Remboursable, notes: after.Notes
+  }).then(function() {
+    toast('Depense modifiee!', 'success');
+    logHistory('Depense modifiee', _editEvId, after.Description, Number(_g('eem-exp-am').value)||0, { __diff: true, before: before, after: after });
+    closeEditExpenseModal();
+  }).catch(function(e) { alert('Erreur: ' + e.message); });
+}
+
+function openEditRevenueModal(revId, eid) {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  _editRevId = revId; _editEvId = eid;
+  var rev = _data.revenues.filter(function(r){ return r.id === revId; })[0];
+  if (!rev) return;
+  _g('eem-rev-ca').value = rev.cat || '';
+  _g('eem-rev-de').value = rev.desc || '';
+  _g('eem-rev-am').value = rev.amount || '';
+  _g('eem-rev-st').value = rev.status || 'recu';
+  _g('eem-rev-no').value = rev.notes || '';
+  _g('edit-revenue-modal').style.display = 'flex';
+}
+
+function closeEditRevenueModal() { _g('edit-revenue-modal').style.display = 'none'; _editRevId = null; }
+
+function saveEditRevenue() {
+  if (!_editRevId) return;
+  var rev = _data.revenues.filter(function(r){ return r.id === _editRevId; })[0];
+  if (!rev) return;
+  var before = { Categorie: rev.cat||'', Description: rev.desc||'', Montant: _m(rev.amount||0), Statut: rev.status||'', Notes: rev.notes||'' };
+  var after = {
+    Categorie: _g('eem-rev-ca').value,
+    Description: _g('eem-rev-de').value,
+    Montant: _m(Number(_g('eem-rev-am').value)||0),
+    Statut: _g('eem-rev-st').value,
+    Notes: _g('eem-rev-no').value
+  };
+  db.collection('revenues').doc(_editRevId).update({
+    cat: after.Categorie, desc: after.Description,
+    amount: Number(_g('eem-rev-am').value) || 0,
+    status: after.Statut, notes: after.Notes
+  }).then(function() {
+    toast('Revenu modifie!', 'success');
+    logHistory('Revenu modifie', _editEvId, after.Description, Number(_g('eem-rev-am').value)||0, { __diff: true, before: before, after: after });
+    closeEditRevenueModal();
+  }).catch(function(e) { alert('Erreur: ' + e.message); });
+}
+
+
+// ============================================================
+// CATEGORIES
+// ============================================================
+function _fillCatSelects() {
+  var expIds = ['ev-exp-ca','eem-exp-ca'];
+  var revIds = ['ev-rev-ca','eem-rev-ca'];
+  expIds.forEach(function(id) {
+    var el = _g(id); if (!el) return;
+    var cur = el.value;
+    el.innerHTML = _data.cats.exp.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+    if (cur) el.value = cur;
+  });
+  revIds.forEach(function(id) {
+    var el = _g(id); if (!el) return;
+    var cur = el.value;
+    el.innerHTML = _data.cats.rev.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+    if (cur) el.value = cur;
+  });
+}
+
+function _rCats() {
+  ['exp','rev'].forEach(function(type) {
+    var el = _g('cats-'+type+'-list'); if (!el) return;
+    var cats = _data.cats[type];
+    el.innerHTML = cats.map(function(c, i) {
+      var renameBtn = '<button onclick="renameCat(\''+type+'\','+i+')" style="background:none;border:none;color:var(--yellow);cursor:pointer;padding:0 2px;font-size:.8rem" title="Renommer">&#9998;</button>';
+      var deleteBtn = '<button onclick="deleteCat(\''+type+'\','+i+')" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0 2px;font-size:.8rem" title="Supprimer">✕</button>';
+      return '<div style="display:flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:4px 10px">'
+        + '<span style="font-size:.82rem">'+c+'</span>'
+        + renameBtn + deleteBtn
+        + '</div>';
+    }).join('');
+  });
+}
+
+function _saveCats() {
+  db.collection('config').doc('categories').set({ exp: _data.cats.exp, rev: _data.cats.rev })
+    .then(function(){ toast('Categories sauvegardees','success'); })
+    .catch(function(e){ alert('Erreur: '+e.message); });
+}
+
+function addCat(type) {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  var inputId = type === 'exp' ? 'new-exp-cat' : 'new-rev-cat';
+  var val = _g(inputId).value.trim();
+  if (!val) return;
+  if (_data.cats[type].indexOf(val) > -1) { toast('Categorie deja existante','error'); return; }
+  _data.cats[type].push(val);
+  _g(inputId).value = '';
+  _saveCats();
+}
+
+function deleteCat(type, idx) {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  var cat = _data.cats[type][idx];
+  if (!confirm('Supprimer la categorie "'+cat+'" ?')) return;
+  _data.cats[type].splice(idx, 1);
+  _saveCats();
+}
+
+function renameCat(type, idx) {
+  if (_role !== 'admin') { toast('Admin seulement','error'); return; }
+  var old = _data.cats[type][idx];
+  var nouveau = prompt('Renommer "'+old+'" :', old);
+  if (!nouveau || !nouveau.trim() || nouveau.trim() === old) return;
+  _data.cats[type][idx] = nouveau.trim();
+  _saveCats();
+}
+
+// ============================================================
+// FOND COMMUN
+// ============================================================
+function _rFonds() {
+  var totalFonds = 0;
+  var rows = [];
+
+  _data.events.forEach(function(ev) {
+    var sp = _split(ev.id);
+    if (!sp.cfg.fcOn) return;
+
+    // Contribution du fond commun depuis le profit de cet evenement
+    var contrib = sp.fonds;
+    if (contrib !== 0) {
+      totalFonds += contrib;
+      var evName = ev.name || ev.id;
+      rows.push({ evName: evName, type: 'Contribution', desc: sp.cfg.fcPct + '% du profit brut', amount: contrib, date: ev.date || '' });
+    }
+
+    // Depenses categorie "Fonds commun" = retraits du fonds
+    var fondsExps = _data.expenses.filter(function(e) { return e.eventId === ev.id && e.paidBy === 'Fonds commun'; });
+    fondsExps.forEach(function(e) {
+      totalFonds -= e.amount;
+      rows.push({ evName: ev.name || ev.id, type: 'Retrait', desc: e.desc || '-', amount: -e.amount, date: e.date || ev.date || '' });
+    });
+  });
+
+  // Stats
+  var statsEl = _g('fonds-stats');
+  if (statsEl) {
+    statsEl.innerHTML = [
+      ['Solde actuel', _m(totalFonds), totalFonds >= 0 ? 'g' : 'r'],
+      ['Transactions', rows.length, 'w'],
+      ['Evenements actifs', _data.events.filter(function(ev){ return _split(ev.id).cfg.fcOn; }).length, 'y']
+    ].map(function(s) {
+      return '<div class="stat"><div class="sl">'+s[0]+'</div><div class="sv '+s[2]+'">'+s[1]+'</div></div>';
+    }).join('');
+  }
+
+  // Table
+  var tb = _g('fonds-tb');
+  if (!tb) return;
+  if (!rows.length) { tb.innerHTML = '<tr><td colspan="5" class="empty">Aucune transaction de fond commun</td></tr>'; return; }
+  rows.sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  tb.innerHTML = rows.map(function(r) {
+    var cls = r.amount >= 0 ? 'g' : 'r';
+    var typeCls = r.type === 'Contribution' ? 'jg' : 'jr';
+    return '<tr>'
+      + '<td><b>'+r.evName+'</b></td>'
+      + '<td><span class="bj '+typeCls+'">'+r.type+'</span></td>'
+      + '<td>'+r.desc+'</td>'
+      + '<td class="'+cls+'">'+_m(r.amount)+'</td>'
+      + '<td>'+r.date+'</td>'
+      + '</tr>';
+  }).join('');
 }
 
 // ============================================================
@@ -1024,7 +1585,7 @@ function _rDash() {
     ['Total depenses', _m(totalDep), 'r'],
     ['Profit brut', _m(totalProfit), totalProfit>=0?'g':'r'],
     ['Fonds commun', _m(totalFonds), 'y'],
-    ['A partager', _m(totalApart), 'p'],
+    ['Banque evenement', _m(totalApart), 'p'],
     ['Evenements', _data.events.length, 'w']
   ];
   ds.innerHTML = stats.map(function(s) {
@@ -1070,12 +1631,41 @@ function _rDash() {
 // ============================================================
 // EVENT LIST
 // ============================================================
+function _resetEvFilters() {
+  var ids = ['ev-search','ev-filter-date-from','ev-filter-date-to','ev-filter-profit'];
+  ids.forEach(function(id){ var el=_g(id); if(el) el.value=''; });
+  _rEvList();
+}
+
 function _rEvList() {
   var c = _g('ev-list-wrap'); if (!c) return;
-  if (!_data.events.length) { c.innerHTML='<div class="empty">Aucun evenement</div>'; return; }
-  c.innerHTML = '<div class="ev-grid">' + _data.events.map(function(ev) {
+  var search = (_g('ev-search') ? _g('ev-search').value.trim().toLowerCase() : '');
+  var dateFrom = _g('ev-filter-date-from') ? _g('ev-filter-date-from').value : '';
+  var dateTo = _g('ev-filter-date-to') ? _g('ev-filter-date-to').value : '';
+  var profitFilter = _g('ev-filter-profit') ? _g('ev-filter-profit').value : '';
+
+  var filtered = _data.events.filter(function(ev) {
+    if (search && !(ev.name||'').toLowerCase().includes(search) && !(ev.lieu||'').toLowerCase().includes(search)) return false;
+    if (dateFrom && ev.date && ev.date < dateFrom) return false;
+    if (dateTo && ev.date && ev.date > dateTo) return false;
+    if (profitFilter) {
+      var s = _split(ev.id);
+      if (profitFilter === 'pos' && s.profit < 0) return false;
+      if (profitFilter === 'neg' && s.profit >= 0) return false;
+    }
+    return true;
+  });
+
+  var countEl = _g('ev-filter-count');
+  if (countEl) {
+    var total = _data.events.length;
+    countEl.textContent = filtered.length < total ? (filtered.length + ' / ' + total + ' evenements') : total + ' evenement' + (total > 1 ? 's' : '');
+  }
+
+  if (!filtered.length) { c.innerHTML='<div class="empty">Aucun evenement correspondant</div>'; return; }
+  c.innerHTML = '<div class="ev-grid">' + filtered.map(function(ev) {
     var s = _split(ev.id);
-    return '<div class="ev-card" onclick="openEvent(\''+ev.id+'\')">'
+    return '<div class="ev-card" onclick="openEvent(\'' + ev.id + '\')">'
       + '<div class="ev-name">'+ev.name+'</div>'
       + '<div class="ev-date">'+(ev.date||'')+(ev.lieu?' · '+ev.lieu:'')+'</div>'
       + '<div class="ev-stats">'
@@ -1106,8 +1696,12 @@ function _rUsers() {
 function createUser() {
   if (_role !== 'admin') { toast('Permission refusee','error'); return; }
   var email=_g('u-email').value.trim(), pass=_g('u-pass').value, name=_g('u-name').value.trim(), role=_g('u-role').value;
-  if (!email||!pass||!name) { alert('Remplissez tous les champs'); return; }
-  if (pass.length < 6) { alert('Mot de passe: min 6 caracteres'); return; }
+  if (!name) { toast('Le nom est obligatoire.', 'error'); return; }
+  if (!email) { toast('Email obligatoire.', 'error'); return; }
+  var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) { toast('Format email invalide.', 'error'); return; }
+  if (!pass) { toast('Le mot de passe est obligatoire.', 'error'); return; }
+  if (pass.length < 6) { toast('Le mot de passe doit contenir au moins 6 caracteres.', 'error'); return; }
   var sec;
   try { sec = firebase.app('sec'); } catch(e) { sec = firebase.initializeApp(firebase.app().options, 'sec'); }
   sec.auth().createUserWithEmailAndPassword(email, pass).then(function(c) {
@@ -1152,7 +1746,7 @@ function doExportPDF() {
     ['Total depenses',_m(sp.dep),[248,113,113]],
     ['Profit brut',_m(sp.profit),sp.profit>=0?[74,222,128]:[248,113,113]],
     ['Fonds commun (10%)',_m(sp.fonds),[251,191,36]],
-    ['A partager',_m(sp.apart),[192,132,252]],
+    ['Banque evenement',_m(sp.apart),[192,132,252]],
     ['Vincent (18%)',_m(sp.vincent),[192,132,252]],
     ['LP Cote (41%)',_m(sp.lpcote),[74,222,128]],
     ['LP Viens (41%)',_m(sp.lpviens),[74,222,128]]
@@ -1196,10 +1790,127 @@ function _refresh() {
   _fillSels();
   _rEvList();
   _rDash();
+  _fillCatSelects();
+  _rCats();
   if (_currentEid) openEvent(_currentEid);
 }
 
+// ============================================================
+// NAV HAMBURGER & DROPDOWNS
+// ============================================================
+var _activeNavGroup = null;
+
+function _toggleNavGroup(id) {
+  var nd = _g('nd-' + id); if (!nd) return;
+  var isOpen = nd.classList.contains('open');
+  document.querySelectorAll('.nav-dropdown').forEach(function(el){ el.classList.remove('open'); });
+  document.querySelectorAll('.nav-group-btn').forEach(function(el){
+    var grp = _pageGroup[_currentPageId];
+    if (!el.id || el.id !== 'ng-' + grp) el.classList.remove('active');
+  });
+  _activeNavGroup = null;
+  if (!isOpen) { nd.classList.add('open'); var btn = _g('ng-'+id); if(btn) btn.classList.add('active'); _activeNavGroup = id; }
+}
+
+function _navGo(page, group) {
+  document.querySelectorAll('.nav-dropdown').forEach(function(el){ el.classList.remove('open'); });
+  _activeNavGroup = null;
+  showPage(page);
+}
+
+function _toggleHamburger() {
+  var m = _g('mobile-menu'); if(m) m.classList.toggle('open');
+}
+
+function _navGoMobile(page) {
+  var m = _g('mobile-menu'); if(m) m.classList.remove('open');
+  showPage(page);
+}
+
+var _currentPageId = 'dash';
+var _origShowPage = showPage;
+showPage = function(id) { _currentPageId = id; _origShowPage(id); };
+
+document.addEventListener('click', function(e) {
+  if (_activeNavGroup && !e.target.closest('.nav-group')) {
+    document.querySelectorAll('.nav-dropdown').forEach(function(el){ el.classList.remove('open'); });
+    _activeNavGroup = null;
+  }
+  var mm = _g('mobile-menu');
+  if (mm && mm.classList.contains('open') && !e.target.closest('#mobile-menu') && !e.target.closest('#hamburger-btn')) {
+    mm.classList.remove('open');
+  }
+});
+
 window.onload = function() { _initShareholderForm(); };
 </script>
+<!-- EDIT EVENT MODAL -->
+<div id="edit-event-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;overflow-y:auto">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:560px;margin:20px auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ct" style="margin:0">Modifier evenement</div>
+      <button onclick="closeEditEventModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div class="frow">
+      <div><lbl>Nom</lbl><input id="eem-name"></div>
+      <div><lbl>Date</lbl><input id="eem-date" type="date"></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Lieu</lbl><input id="eem-lieu"></div>
+      <div><lbl>Prix billet ($)</lbl><input id="eem-prix" type="number" step="0.01"></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Objectif billets</lbl><input id="eem-obj" type="number" min="0"></div>
+    </div>
+    <div><lbl>Notes</lbl><textarea id="eem-notes" style="width:100%;background:var(--card2);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:.84rem;outline:none;min-height:70px;resize:vertical;margin-bottom:8px"></textarea></div>
+    <button class="btn bw" style="margin-top:8px" onclick="saveEditEvent()">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- EDIT EXPENSE MODAL -->
+<div id="edit-expense-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;overflow-y:auto">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:560px;margin:20px auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ct" style="margin:0">Modifier depense</div>
+      <button onclick="closeEditExpenseModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div class="frow">
+      <div><lbl>Categorie</lbl><select id="eem-exp-ca"></select></div>
+      <div><lbl>Description</lbl><input id="eem-exp-de"></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Montant ($)</lbl><input id="eem-exp-am" type="number" step="0.01"></div>
+      <div><lbl>Paye par</lbl><select id="eem-exp-pb"><option>LP Cote</option><option>LP Viens</option><option>Vincent</option><option>Fonds commun</option><option>Banque evenement</option></select></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Statut</lbl><select id="eem-exp-st"><option value="paye">Paye</option><option value="en attente">En attente</option></select></div>
+      <div><lbl>Remboursable</lbl><select id="eem-exp-rf"><option value="non">Non</option><option value="oui">Oui</option></select></div>
+      <div><lbl>Notes</lbl><input id="eem-exp-no"></div>
+    </div>
+    <button class="btn bw" style="margin-top:8px" onclick="saveEditExpense()">Sauvegarder</button>
+  </div>
+</div>
+
+<!-- EDIT REVENUE MODAL -->
+<div id="edit-revenue-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:500;align-items:center;justify-content:center;overflow-y:auto">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:24px;width:100%;max-width:560px;margin:20px auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="ct" style="margin:0">Modifier revenu</div>
+      <button onclick="closeEditRevenueModal()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
+    </div>
+    <div class="frow">
+      <div><lbl>Categorie</lbl><select id="eem-rev-ca"></select></div>
+      <div><lbl>Description</lbl><input id="eem-rev-de"></div>
+    </div>
+    <div class="frow">
+      <div><lbl>Montant ($)</lbl><input id="eem-rev-am" type="number" step="0.01"></div>
+      <div><lbl>Statut</lbl><select id="eem-rev-st"><option value="recu">Recu</option><option value="en attente">En attente</option></select></div>
+      <div><lbl>Notes</lbl><input id="eem-rev-no"></div>
+    </div>
+    <button class="btn bg2" style="margin-top:8px" onclick="saveEditRevenue()">Sauvegarder</button>
+  </div>
+</div>
+
+
 </body>
 </html>

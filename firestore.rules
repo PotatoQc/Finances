@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ───────────────────────────────────────
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    // Un compte doit avoir une fiche dans /users pour accéder aux données
+    // (retirer la fiche = retirer l'accès).
+    function hasAccess() {
+      return isAuthenticated() && exists(userDoc());
+    }
+
+    function getUserRole() {
+      return get(userDoc()).data.role;
+    }
+
+    function isAdmin() {
+      return hasAccess() && getUserRole() == 'admin';
+    }
+
+    function isManager() {
+      return hasAccess() && (getUserRole() == 'manager' || getUserRole() == 'admin');
+    }
+
+    // Rôle « merch » : voit tout, ne gère que la merch.
+    function isMerch() {
+      return hasAccess() && getUserRole() in ['merch', 'manager', 'admin'];
+    }
+
+    function isViewer() {
+      return hasAccess();
+    }
+
+    // ─── Users collection ────────────────────────────────────────
+    // Seul un admin peut créer/supprimer des utilisateurs ou changer un rôle.
+    // Un utilisateur peut modifier sa propre fiche, mais pas son rôle.
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+        || (isAuthenticated() && request.auth.uid == userId
+            && request.resource.data.role == resource.data.role);
+      allow delete: if isAdmin();
+    }
+
+    // ─── Events collection ───────────────────────────────────────
+    // Viewers peuvent lire, Managers+ peuvent créer et modifier les infos.
+    // Le partage (mode, %, salaires, fonds) et les versements: admin seulement.
+    // Seul admin peut supprimer.
+    match /events/{eventId} {
+      allow read: if isViewer();
+      allow create: if isManager();
+      allow update: if isAdmin()
+        || (isManager() && !request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['mode', 'fcOn', 'fcPct', 'shareholders', 'payouts']));
+      allow delete: if isAdmin();
+    }
+
+    // ─── Expenses collection ─────────────────────────────────────
+    // Viewers peuvent lire, Managers peuvent ajouter,
+    // seul admin peut modifier ou supprimer.
+    match /expenses/{expenseId} {
+      allow read: if isViewer();
+      allow create: if isManager();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Revenues collection ─────────────────────────────────────
+    match /revenues/{revenueId} {
+      allow read: if isViewer();
+      allow create: if isManager();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ─── Merch (séparée du fonds commun) ─────────────────────────
+    // Produits et stock : rôle merch et plus peuvent ajouter et ajuster
+    // le stock (une vente baisse le stock), seul admin peut supprimer.
+    match /merchItems/{itemId} {
+      allow read: if isViewer();
+      allow create, update: if isMerch();
+      allow delete: if isAdmin();
+    }
+
+    // Ventes et dépenses merch : rôle merch et plus peuvent ajouter et
+    // modifier, seul admin peut supprimer. Associés et versements merch
+    // sont dans /config (admin seulement).
+    match /merchTx/{txId} {
+      allow read: if isViewer();
+      allow create, update: if isMerch();
+      allow delete: if isAdmin();
+    }
+
+    // ─── History collection ──────────────────────────────────────
+    // Les écritures sont faites automatiquement par l'app.
+    // Personne ne peut supprimer l'historique.
+    match /history/{historyId} {
+      allow read: if isViewer();
+      allow create: if isViewer();
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    // ─── Config collection ───────────────────────────────────────
+    // categories, partners (associés par défaut), fund (ajustements du fonds)
+    // Viewers peuvent lire, Admins peuvent modifier.
+    match /config/{configId} {
+      allow read: if isViewer();
+      allow write: if isAdmin();
+    }
+
+    // ─── Blocage par défaut ──────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
